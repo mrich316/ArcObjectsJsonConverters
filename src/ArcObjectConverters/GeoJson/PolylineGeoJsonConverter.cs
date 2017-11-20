@@ -12,7 +12,7 @@ namespace ArcObjectConverters.GeoJson
         private readonly bool _supportsSideEffects;
 
         public PolylineGeoJsonConverter()
-            : this(6, 0.1, false)
+            : this(GeoJsonDefaults.CoordinatesPrecision, 0.2, false)
         {
         }
 
@@ -35,28 +35,34 @@ namespace ArcObjectConverters.GeoJson
             _supportsSideEffects = supportsSideEffects;
         }
 
-        public override bool CanRead => true;
+        public override bool CanRead => false;
 
         public override bool CanWrite => true;
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
-            var geometry = _supportsSideEffects
-                ? (IPolyline) value
-                : (IPolyline) ((IClone) value).Clone();
-
-            if (geometry == null)
+            if (value == null)
             {
                 writer.WriteNull();
                 return;
             }
 
+            var geometry = _supportsSideEffects
+                ? (IPolyline) value
+                : (IPolyline) ((IClone) value).Clone();
+
+            var topoOperator = (ITopologicalOperator2) geometry;
+
+            // Make sure the geometry is "valid".
+            topoOperator.IsKnownSimple_2 = false;
+            geometry.SimplifyNetwork();
+
             // The GeoJson spec does not support true curves.
             geometry.Generalize(_maxAllowedOffset);
 
             // Make sure the geometry is "valid".
-            ((ITopologicalOperator2) geometry).IsKnownSimple_2 = false;
-            geometry.SimplifyNetwork();
+            topoOperator.IsKnownSimple_2 = false;
+            topoOperator.Simplify();
 
             if (geometry.IsEmpty)
             {
@@ -68,10 +74,29 @@ namespace ArcObjectConverters.GeoJson
 
             var collection = (IGeometryCollection) geometry;
 
-            writer.WritePropertyName("type");
-            writer.WriteValue(collection.GeometryCount > 1
-                ? "MultiLineString"
-                : "LineString");
+            if (collection.GeometryCount > 1)
+            {
+                writer.WritePropertyName("type");
+                writer.WriteValue("MultiLineString");
+
+                writer.WritePropertyName("coordinates");
+                writer.WriteStartArray();
+
+                for (int i = 0, n = collection.GeometryCount; i < n; i++)
+                {
+                    WriteCoordinatesArray(writer, (IPointCollection)collection.Geometry[i], serializer);
+                }
+
+                writer.WriteEndArray();
+            }
+            else
+            {
+                writer.WritePropertyName("type");
+                writer.WriteValue("LineString");
+
+                writer.WritePropertyName("coordinates");
+                WriteCoordinatesArray(writer, (IPointCollection) geometry, serializer);
+            }
 
             writer.WriteEndObject();
         }
@@ -84,6 +109,29 @@ namespace ArcObjectConverters.GeoJson
         public override bool CanConvert(Type objectType)
         {
             return typeof(PolylineClass) == objectType;
+        }
+
+        private void WriteCoordinatesArray(JsonWriter writer, IPointCollection collection, JsonSerializer serializer)
+        {
+            writer.WriteStartArray();
+
+            for (int i = 0, n = collection.PointCount; i < n; i++)
+            {
+                var point = collection.Point[i];
+
+                writer.WriteStartArray();
+                writer.WriteValue(Math.Round(point.X, _coordinatesPrecision));
+                writer.WriteValue(Math.Round(point.Y, _coordinatesPrecision));
+
+                if (((IZAware)point).ZAware)
+                {
+                    writer.WriteValue(Math.Round(point.Z, _coordinatesPrecision));
+                }
+
+                writer.WriteEndArray();
+            }
+
+            writer.WriteEndArray();
         }
 
     }

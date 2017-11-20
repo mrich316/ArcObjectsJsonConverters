@@ -7,26 +7,18 @@ namespace ArcObjectConverters.GeoJson
     public class PointGeoJsonConverter : JsonConverter
     {
         private readonly int _coordinatesPrecision;
-        private readonly bool _supportsSideEffects;
 
         public PointGeoJsonConverter()
-            : this(6, false)
+            : this(GeoJsonDefaults.CoordinatesPrecision)
         {
         }
 
         /// <param name="coordinatesPrecision">Number of digits to keep during serialization</param>
-        /// <param name="supportsSideEffects">
-        /// <see cref="IGeometry"/> operations like <see cref="IGeometry.Project(ISpatialReference)"/> can
-        /// have side effets (altering the input object). If <c>true</c>, geometries will not be cloned,
-        /// increasing performance, if <c>false</c>, no side effects will happen, at a cost of lower
-        /// performance.
-        /// </param>
-        public PointGeoJsonConverter(int coordinatesPrecision, bool supportsSideEffects)
+        public PointGeoJsonConverter(int coordinatesPrecision)
         {
             if (coordinatesPrecision < 0) throw new ArgumentOutOfRangeException(nameof(coordinatesPrecision));
 
             _coordinatesPrecision = coordinatesPrecision;
-            _supportsSideEffects = supportsSideEffects;
         }
 
         public override bool CanRead => false;

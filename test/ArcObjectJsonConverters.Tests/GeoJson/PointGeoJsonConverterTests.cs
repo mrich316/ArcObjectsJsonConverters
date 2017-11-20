@@ -37,7 +37,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
         }
 
         [ArcObjectsTheory, AutoData]
-        public void ValidPoint_ReturnsGeoJson(double x, double y)
+        public void Point2D_ReturnsGeoJson(double x, double y)
         {
             var sut = new PointGeoJsonConverter();
 
@@ -59,7 +59,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
         }
 
         [ArcObjectsTheory, AutoData]
-        public void Valid3DPoint_ReturnsGeoJson(double x, double y, double z)
+        public void Point3D_ReturnsGeoJson(double x, double y, double z)
         {
             var sut = new PointGeoJsonConverter();
 

@@ -95,6 +95,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="GeoJson\PointGeoJsonConverterTests.cs" />
+    <Compile Include="GeoJson\PolylineGeoJsonConveterTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
