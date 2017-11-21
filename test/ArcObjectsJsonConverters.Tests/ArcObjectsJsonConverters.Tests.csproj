@@ -100,7 +100,7 @@
     <Compile Include="JsonAssert.cs" />
     <Compile Include="GeoJson\DoubleExtensions.cs" />
     <Compile Include="GeoJson\PointGeoJsonConverterTests.cs" />
-    <Compile Include="GeoJson\PolylineGeoJsonConveterTests.cs" />
+    <Compile Include="GeoJson\PolylineGeoJsonConverterTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

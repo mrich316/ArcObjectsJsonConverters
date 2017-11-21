@@ -8,7 +8,7 @@ using Xunit;
 
 namespace ArcObjectJsonConverters.Tests.GeoJson
 {
-    public class PolylineGeoJsonConveterTests
+    public class PolylineGeoJsonConverterTests
     {
         private readonly IArcObjectFactory _factory = new ClientArcObjectFactory();
 
