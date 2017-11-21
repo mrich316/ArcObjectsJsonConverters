@@ -1,6 +1,4 @@
-# ArcObjects Json Converters
-
-## Opinionated Json Converters for ESRI ArcObjects
+# Opinionated Json Converters for ESRI ArcObjects
 
 This library aims to simplify interoperability between ESRI
 ArcObjects developments and open-sourced projects.
