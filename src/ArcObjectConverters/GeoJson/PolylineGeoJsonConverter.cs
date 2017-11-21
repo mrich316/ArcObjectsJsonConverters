@@ -55,12 +55,12 @@ namespace ArcObjectConverters.GeoJson
 
             // Make sure the geometry is "valid".
             topoOperator.IsKnownSimple_2 = false;
-            geometry.SimplifyNetwork();
+            topoOperator.Simplify();
 
             // The GeoJson spec does not support true curves.
             geometry.Generalize(_maxAllowedOffset);
 
-            // Make sure the geometry is "valid".
+            // Make sure the geometry is "valid" after generalize.
             topoOperator.IsKnownSimple_2 = false;
             topoOperator.Simplify();
 

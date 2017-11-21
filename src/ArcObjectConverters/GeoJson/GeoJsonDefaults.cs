@@ -1,4 +1,6 @@
-﻿namespace ArcObjectConverters.GeoJson
+﻿using ESRI.ArcGIS.Geometry;
+
+namespace ArcObjectConverters.GeoJson
 {
     public static class GeoJsonDefaults
     {

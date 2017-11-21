@@ -18,8 +18,34 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
         {
             var sut = new PointGeoJsonConverter();
 
-            var point = (IPoint) _factory.CreateObject<Point>();
+            var point = (IPoint)_factory.CreateObject<Point>();
             point.SetEmpty();
+
+            var actual = JsonConvert.SerializeObject(point, sut);
+
+            Assert.Equal("null", actual);
+        }
+
+        [ArcObjectsTheory, AutoData]
+        public void WithNanCoords_ReturnsNullJson(double x)
+        {
+            var sut = new PointGeoJsonConverter();
+
+            var point = (IPoint)_factory.CreateObject<Point>();
+            point.PutCoords(x, double.NaN);
+
+            var actual = JsonConvert.SerializeObject(point, sut);
+
+            Assert.Equal("null", actual);
+        }
+
+        [ArcObjectsTheory, AutoData]
+        public void WithInfinityCoords_ReturnsNullJson(double x)
+        {
+            var sut = new PointGeoJsonConverter();
+
+            var point = (IPoint)_factory.CreateObject<Point>();
+            point.PutCoords(x, double.PositiveInfinity);
 
             var actual = JsonConvert.SerializeObject(point, sut);
 
@@ -45,13 +71,11 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
             point.PutCoords(x, y);
 
             var actual = JsonConvert.SerializeObject(point, Formatting.Indented, sut);
-
-            // Json.NET keeps ".0" for float/double types, force this format using "#.0".
             var expected = $@"{{
   ""type"": ""Point"",
   ""coordinates"": [
-    {Math.Round(x, GeoJsonDefaults.CoordinatesPrecision):#.0},
-    {Math.Round(y, GeoJsonDefaults.CoordinatesPrecision):#.0}
+    {x.ToJsonString()},
+    {y.ToJsonString()}
   ]
 }}";
 
@@ -70,14 +94,12 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
             point.Z = z;
 
             var actual = JsonConvert.SerializeObject(point, Formatting.Indented, sut);
-
-            // Json.NET keeps ".0" for float/double types, force this format using "#.0".
             var expected = $@"{{
   ""type"": ""Point"",
   ""coordinates"": [
-    {Math.Round(x, GeoJsonDefaults.CoordinatesPrecision):#.0},
-    {Math.Round(y, GeoJsonDefaults.CoordinatesPrecision):#.0},
-    {Math.Round(z, GeoJsonDefaults.CoordinatesPrecision):#.0}
+    {x.ToJsonString()},
+    {y.ToJsonString()},
+    {z.ToJsonString()}
   ]
 }}";
 

@@ -37,7 +37,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
         }
 
         [ArcObjectsTheory, AutoData]
-        public void WithSinglePoint2D_ReturnsGeoJson(double x, double y)
+        public void WithSinglePoint2D_ReturnsNullJson(double x, double y)
         {
             var sut = new PolylineGeoJsonConverter();
 
@@ -72,12 +72,12 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
   ""type"": ""LineString"",
   ""coordinates"": [
     [
-      {Math.Round(x1, GeoJsonDefaults.CoordinatesPrecision):#.0},
-      {Math.Round(y1, GeoJsonDefaults.CoordinatesPrecision):#.0}
+      {x1.ToJsonString()},
+      {y1.ToJsonString()}
     ],
     [
-      {Math.Round(x2, GeoJsonDefaults.CoordinatesPrecision):#.0},
-      {Math.Round(y2, GeoJsonDefaults.CoordinatesPrecision):#.0}
+      {x2.ToJsonString()},
+      {y2.ToJsonString()}
     ]
   ]
 }}";
