@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArcObjectConverters", "src\ArcObjectConverters\ArcObjectConverters.csproj", "{FE1E126E-45C4-4937-ADBE-0057F076A493}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArcObjectsJsonConverters", "src\ArcObjectsJsonConverters\ArcObjectsJsonConverters.csproj", "{FE1E126E-45C4-4937-ADBE-0057F076A493}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArcObjectJsonConverters.Tests", "test\ArcObjectJsonConverters.Tests\ArcObjectJsonConverters.Tests.csproj", "{CF9BF6EB-B9EA-4770-8A0B-8D9086B0C4A4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArcObjectsJsonConverters.Tests", "test\ArcObjectsJsonConverters.Tests\ArcObjectsJsonConverters.Tests.csproj", "{CF9BF6EB-B9EA-4770-8A0B-8D9086B0C4A4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -104,7 +104,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\ArcObjectConverters\ArcObjectConverters.csproj">
+    <ProjectReference Include="..\..\src\ArcObjectsJsonConverters\ArcObjectsJsonConverters.csproj">
       <Project>{FE1E126E-45C4-4937-ADBE-0057F076A493}</Project>
       <Name>ArcObjectConverters</Name>
     </ProjectReference>
