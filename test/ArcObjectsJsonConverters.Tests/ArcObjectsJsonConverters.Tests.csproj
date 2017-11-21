@@ -47,6 +47,9 @@
       <SpecificVersion>False</SpecificVersion>
       <Private>False</Private>
     </Reference>
+    <Reference Include="JsonDiffPatchDotNet, Version=2.0.2.0, Culture=neutral, PublicKeyToken=a407b9994a6d66d5, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\JsonDiffPatch.Net.2.0.2\lib\net45\JsonDiffPatchDotNet.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.10.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
@@ -94,6 +97,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="JsonAssert.cs" />
     <Compile Include="GeoJson\DoubleExtensions.cs" />
     <Compile Include="GeoJson\PointGeoJsonConverterTests.cs" />
     <Compile Include="GeoJson\PolylineGeoJsonConveterTests.cs" />

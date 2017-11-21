@@ -1,5 +1,4 @@
-﻿using System;
-using ArcObjectConverters.GeoJson;
+﻿using ArcObjectConverters.GeoJson;
 using ESRI.ArcGIS.Geometry;
 using Newtonsoft.Json;
 using Ploeh.AutoFixture.Xunit2;
@@ -57,6 +56,9 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
         {
             var sut = new PolylineGeoJsonConverter();
 
+            var sr = _factory.CreateObject<SpatialReferenceEnvironment>()
+                .CreateProjectedCoordinateSystem(32188);
+
             var point1 = (IPoint)_factory.CreateObject<Point>();
             point1.PutCoords(x1, y1);
 
@@ -64,6 +66,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
             point2.PutCoords(x2, y2);
 
             var line = (IPolyline)_factory.CreateObject<Polyline>();
+            line.SpatialReference = sr;
             line.FromPoint = point1;
             line.ToPoint = point2;
 
@@ -82,7 +85,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
   ]
 }}";
 
-            Assert.Equal(expected, actual);
+            JsonAssert.Equal(expected, actual);
         }
     }
 }

@@ -49,7 +49,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
 
             var actual = JsonConvert.SerializeObject(point, sut);
 
-            Assert.Equal("null", actual);
+            JsonAssert.Equal("null", actual);
         }
 
         [ArcObjectsFact]
@@ -79,7 +79,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
   ]
 }}";
 
-            Assert.Equal(expected, actual);
+            JsonAssert.Equal(expected, actual);
         }
 
         [ArcObjectsTheory, AutoData]
@@ -103,7 +103,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
   ]
 }}";
 
-            Assert.Equal(expected, actual);
+            JsonAssert.Equal(expected, actual);
         }
 
     }
