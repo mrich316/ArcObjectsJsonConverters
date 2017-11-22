@@ -6,26 +6,17 @@ namespace ArcObjectConverters.GeoJson
 {
     public class PolylineGeoJsonConverter : BaseGeoJsonConverter
     {
-        private readonly double _maxAllowedOffset;
+        private readonly GeoJsonSerializerSettings _serializerSettings;
 
         public PolylineGeoJsonConverter()
-            : this(0.1, new GeoJsonSerializerSettings())
+            :this(new GeoJsonSerializerSettings())
         {
         }
 
-        /// <param name="maxAllowedOffset">GeoJson does not support curves. Geometries will be generalized.
-        /// </param>
-        public PolylineGeoJsonConverter(double maxAllowedOffset)
-            : this(maxAllowedOffset, new GeoJsonSerializerSettings())
-        {
-            if (maxAllowedOffset < 0) throw new ArgumentOutOfRangeException(nameof(maxAllowedOffset));
-
-            _maxAllowedOffset = maxAllowedOffset;
-        }
-
-        protected PolylineGeoJsonConverter(double maxAllowedOffset, GeoJsonSerializerSettings serializerSettings) 
+        public PolylineGeoJsonConverter(GeoJsonSerializerSettings serializerSettings) 
             : base(serializerSettings)
         {
+            _serializerSettings = serializerSettings;
         }
 
         public override bool CanRead => false;
@@ -50,7 +41,7 @@ namespace ArcObjectConverters.GeoJson
             topoOperator.Simplify();
 
             // The GeoJson spec does not support true curves.
-            geometry.Generalize(_maxAllowedOffset);
+            geometry.Generalize(_serializerSettings.Tolerance);
 
             // Make sure the geometry is "valid" after generalize.
             topoOperator.IsKnownSimple_2 = false;

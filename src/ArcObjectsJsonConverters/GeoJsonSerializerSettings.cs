@@ -6,6 +6,8 @@ namespace ArcObjectConverters
     {
         public int Precision { get; set; } = 6;
 
+        public double Tolerance { get; set; } = 0.001;
+
         public DimensionHandling Dimensions { get; set; }
 
         /// <summary>
