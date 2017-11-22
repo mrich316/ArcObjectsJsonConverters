@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Globalization;
+using ArcObjectConverters;
 using ArcObjectConverters.GeoJson;
 
 namespace ArcObjectJsonConverters.Tests.GeoJson
@@ -24,7 +25,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
 
         public static string ToJsonString(this double value)
         {
-            return value.ToJsonString(GeoJsonDefaults.CoordinatesPrecision);
+            return value.ToJsonString(new GeoJsonSerializerSettings().Precision);
         }
     }
 }

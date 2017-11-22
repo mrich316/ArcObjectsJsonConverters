@@ -1,4 +1,4 @@
-﻿using System;
+﻿using ArcObjectConverters;
 using ArcObjectConverters.GeoJson;
 using ESRI.ArcGIS.Geometry;
 using Newtonsoft.Json;
@@ -85,7 +85,11 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
         [ArcObjectsTheory, AutoData]
         public void Point3D_ReturnsGeoJson(double x, double y, double z)
         {
-            var sut = new PointGeoJsonConverter();
+            var settings = new GeoJsonSerializerSettings
+            {
+                Dimensions = DimensionHandling.XYZ
+            };
+            var sut = new PointGeoJsonConverter(settings);
 
             var point = (IPoint)_factory.CreateObject<Point>();
             point.PutCoords(x, y);

@@ -52,7 +52,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="GeoJson\GeoJsonDefaults.cs" />
+    <Compile Include="DimensionHandling.cs" />
+    <Compile Include="GeoJsonSerializerSettings.cs" />
+    <Compile Include="GeoJson\BaseGeoJsonConverter.cs" />
     <Compile Include="GeoJson\PointGeoJsonConverter.cs" />
     <Compile Include="GeoJson\PolylineGeoJsonConverter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

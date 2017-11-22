@@ -1,38 +1,31 @@
 ﻿using System;
-using ESRI.ArcGIS.esriSystem;
 using ESRI.ArcGIS.Geometry;
 using Newtonsoft.Json;
 
 namespace ArcObjectConverters.GeoJson
 {
-    public class PolylineGeoJsonConverter : JsonConverter
+    public class PolylineGeoJsonConverter : BaseGeoJsonConverter
     {
-        private readonly int _coordinatesPrecision;
         private readonly double _maxAllowedOffset;
-        private readonly bool _supportsSideEffects;
 
         public PolylineGeoJsonConverter()
-            : this(GeoJsonDefaults.CoordinatesPrecision, 0.2, false)
+            : this(0.1, new GeoJsonSerializerSettings())
         {
         }
 
-        /// <param name="coordinatesPrecision">Number of digits to keep during serialization</param>
         /// <param name="maxAllowedOffset">GeoJson does not support curves. Geometries will be generalized.
         /// </param>
-        /// <param name="supportsSideEffects">
-        /// <see cref="IGeometry"/> operations like <see cref="IGeometry.Project(ISpatialReference)"/> can
-        /// have side effets (altering the input object). If <c>true</c>, geometries will not be cloned,
-        /// increasing performance, if <c>false</c>, no side effects will happen, at a cost of lower
-        /// performance.
-        /// </param>
-        public PolylineGeoJsonConverter(int coordinatesPrecision, double maxAllowedOffset, bool supportsSideEffects)
+        public PolylineGeoJsonConverter(double maxAllowedOffset)
+            : this(maxAllowedOffset, new GeoJsonSerializerSettings())
         {
-            if (coordinatesPrecision < 0) throw new ArgumentOutOfRangeException(nameof(coordinatesPrecision));
             if (maxAllowedOffset < 0) throw new ArgumentOutOfRangeException(nameof(maxAllowedOffset));
 
-            _coordinatesPrecision = coordinatesPrecision;
             _maxAllowedOffset = maxAllowedOffset;
-            _supportsSideEffects = supportsSideEffects;
+        }
+
+        protected PolylineGeoJsonConverter(double maxAllowedOffset, GeoJsonSerializerSettings serializerSettings) 
+            : base(serializerSettings)
+        {
         }
 
         public override bool CanRead => false;
@@ -47,9 +40,7 @@ namespace ArcObjectConverters.GeoJson
                 return;
             }
 
-            var geometry = _supportsSideEffects
-                ? (IPolyline) value
-                : (IPolyline) ((IClone) value).Clone();
+            var geometry = GetOrCloneGeometry<IPolyline>(value);
 
             var topoOperator = (ITopologicalOperator2) geometry;
 
@@ -85,7 +76,7 @@ namespace ArcObjectConverters.GeoJson
 
                 for (int i = 0, n = collection.GeometryCount; i < n; i++)
                 {
-                    WriteCoordinatesArray(writer, (IPointCollection)collection.Geometry[i], serializer);
+                    WriteLineStringArray(writer, (IPointCollection)collection.Geometry[i], serializer);
                 }
 
                 writer.WriteEndArray();
@@ -96,7 +87,7 @@ namespace ArcObjectConverters.GeoJson
                 writer.WriteValue("LineString");
 
                 writer.WritePropertyName("coordinates");
-                WriteCoordinatesArray(writer, (IPointCollection) geometry, serializer);
+                WriteLineStringArray(writer, (IPointCollection) geometry, serializer);
             }
 
             writer.WriteEndObject();
@@ -112,24 +103,13 @@ namespace ArcObjectConverters.GeoJson
             return typeof(PolylineClass) == objectType;
         }
 
-        private void WriteCoordinatesArray(JsonWriter writer, IPointCollection collection, JsonSerializer serializer)
+        private void WriteLineStringArray(JsonWriter writer, IPointCollection collection, JsonSerializer serializer)
         {
             writer.WriteStartArray();
 
             for (int i = 0, n = collection.PointCount; i < n; i++)
             {
-                var point = collection.Point[i];
-
-                writer.WriteStartArray();
-                writer.WriteValue(Math.Round(point.X, _coordinatesPrecision));
-                writer.WriteValue(Math.Round(point.Y, _coordinatesPrecision));
-
-                if (((IZAware)point).ZAware)
-                {
-                    writer.WriteValue(Math.Round(point.Z, _coordinatesPrecision));
-                }
-
-                writer.WriteEndArray();
+                WritePositionArray(writer, collection.Point[i], serializer);
             }
 
             writer.WriteEndArray();
