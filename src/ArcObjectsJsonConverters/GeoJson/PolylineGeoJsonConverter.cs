@@ -54,6 +54,7 @@ namespace ArcObjectConverters.GeoJson
             var topoOperator = (ITopologicalOperator2) geometry;
 
             // Make sure the geometry is "valid".
+            // Helps to generalize invalid shapes by first cleaning/correcting them.
             topoOperator.IsKnownSimple_2 = false;
             topoOperator.Simplify();
 
