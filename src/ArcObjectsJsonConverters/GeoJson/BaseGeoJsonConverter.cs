@@ -48,7 +48,7 @@ namespace ArcObjectConverters.GeoJson
             {
                 var zAware = (IZAware) value;
                 var z = !zAware.ZAware || double.IsNaN(value.Z)
-                    ? 0
+                    ? _serializerSettings.DefaultZValue
                     : Math.Round(value.Z, _serializerSettings.Precision);
 
                 writer.WriteValue(z);
