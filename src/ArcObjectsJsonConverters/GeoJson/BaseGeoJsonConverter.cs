@@ -21,21 +21,22 @@ namespace ArcObjectConverters.GeoJson
         }
 
         /// <summary>
-        /// Get or clone the geometry, depending of <see cref="GeoJsonSerializerSettings.SerializerHasSideEffects"/>.
+        /// Prepare the geometry (or a copy of itself) to be serialized. Depending on <see cref="GeoJsonSerializerSettings"/>,
+        /// the geometry might be altered, cloned and generalized by this function.
         ///  
         /// <see cref="IGeometry"/> operations like <see cref="IGeometry.Project(ISpatialReference)"/> can
         /// have side effets (altering the input object). If <c>true</c>, geometries will not be cloned,
         /// increasing performance, if <c>false</c>, no side effects will happen, at a cost of lower
         /// performance.
         /// </summary>
-        protected T GetOrCloneGeometry<T>(object value)
+        protected virtual object PrepareGeometry(object value)
         {
             if (_serializerSettings.SerializerHasSideEffects || value == null)
             {
-                return (T)value;
+                return value;
             }
 
-            return (T) ((IClone) value).Clone();
+            return ((IClone) value).Clone();
         }
 
         protected void WritePositionArray(JsonWriter writer, IPoint value, JsonSerializer serializer)

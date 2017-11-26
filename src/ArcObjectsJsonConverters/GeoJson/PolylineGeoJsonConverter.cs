@@ -25,29 +25,9 @@ namespace ArcObjectConverters.GeoJson
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
-            if (value == null)
-            {
-                writer.WriteNull();
-                return;
-            }
+            var geometry = (IPolyline) PrepareGeometry(value);
 
-            var geometry = GetOrCloneGeometry<IPolyline>(value);
-
-            var topoOperator = (ITopologicalOperator2) geometry;
-
-            // Make sure the geometry is "valid".
-            // Helps to generalize invalid shapes by first cleaning/correcting them.
-            topoOperator.IsKnownSimple_2 = false;
-            topoOperator.Simplify();
-
-            // The GeoJson spec does not support true curves.
-            geometry.Generalize(_serializerSettings.Tolerance);
-
-            // Make sure the geometry is "valid" after generalize.
-            topoOperator.IsKnownSimple_2 = false;
-            topoOperator.Simplify();
-
-            if (geometry.IsEmpty)
+            if (geometry == null || geometry.IsEmpty)
             {
                 writer.WriteNull();
                 return;
@@ -67,7 +47,7 @@ namespace ArcObjectConverters.GeoJson
 
                 for (int i = 0, n = collection.GeometryCount; i < n; i++)
                 {
-                    WriteLineStringArray(writer, (IPointCollection)collection.Geometry[i], serializer);
+                    WriteLineStringArray(writer, (IPointCollection) collection.Geometry[i], serializer);
                 }
 
                 writer.WriteEndArray();
@@ -75,10 +55,22 @@ namespace ArcObjectConverters.GeoJson
             else
             {
                 writer.WritePropertyName("type");
-                writer.WriteValue("LineString");
 
-                writer.WritePropertyName("coordinates");
-                WriteLineStringArray(writer, (IPointCollection) geometry, serializer);
+                var points = (IPointCollection) geometry;
+                if (points.PointCount == 1)
+                {
+                    writer.WriteValue("Point");
+
+                    writer.WritePropertyName("coordinates");
+                    WritePositionArray(writer, points.Point[0], serializer);
+                }
+                else
+                {
+                    writer.WriteValue("LineString");
+
+                    writer.WritePropertyName("coordinates");
+                    WriteLineStringArray(writer, points, serializer);
+                }
             }
 
             writer.WriteEndObject();
@@ -92,6 +84,29 @@ namespace ArcObjectConverters.GeoJson
         public override bool CanConvert(Type objectType)
         {
             return typeof(PolylineClass) == objectType;
+        }
+
+        protected override object PrepareGeometry(object value)
+        {
+            var geometry = (IPolyline) base.PrepareGeometry(value);
+
+            if (_serializerSettings.Simplify)
+            {
+                var topo = (ITopologicalOperator2)geometry;
+                topo.IsKnownSimple_2 = false;
+
+                try
+                {
+                    topo.Simplify();
+                    geometry.Generalize(_serializerSettings.Tolerance);
+                }
+                finally
+                {
+                    topo.Simplify();
+                }
+            }
+
+            return geometry;
         }
 
         private void WriteLineStringArray(JsonWriter writer, IPointCollection collection, JsonSerializer serializer)

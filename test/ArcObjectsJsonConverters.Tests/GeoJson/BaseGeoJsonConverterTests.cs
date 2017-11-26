@@ -23,7 +23,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
             {
                 var sut = new TestGeoJsonConverter(new GeoJsonSerializerSettings {SerializerHasSideEffects = false});
 
-                var actual = sut.TestGetOrCloneGeometry<IPoint>(expected);
+                var actual = sut.TestGetOrCloneGeometry(expected);
 
                 Assert.NotEqual(expected, actual);
             }
@@ -33,7 +33,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
             {
                 var sut = new TestGeoJsonConverter(new GeoJsonSerializerSettings { SerializerHasSideEffects = true });
 
-                var actual = sut.TestGetOrCloneGeometry<IPoint>(expected);
+                var actual = sut.TestGetOrCloneGeometry(expected);
 
                 Assert.Same(expected, actual);
             }
@@ -46,9 +46,9 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
             {
             }
 
-            public T TestGetOrCloneGeometry<T>(object value)
+            public object TestGetOrCloneGeometry(object value)
             {
-                return GetOrCloneGeometry<T>(value);
+                return PrepareGeometry(value);
             }
 
             public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)

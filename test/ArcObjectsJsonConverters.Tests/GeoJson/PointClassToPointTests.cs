@@ -14,7 +14,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
         private readonly IArcObjectFactory _factory = new ClientArcObjectFactory();
 
         [ArcObjectsTheory, ArcObjectsConventions(32188)]
-        public void NullReturnsNull(IPoint point, PointGeoJsonConverter sut)
+        public void NullReturnsNull(PointGeoJsonConverter sut)
         {
             var actual = JsonConvert.SerializeObject((PointClass)null, sut);
 

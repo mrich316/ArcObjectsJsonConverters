@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using ArcObjectConverters;
 using ArcObjectConverters.GeoJson;
 using ESRI.ArcGIS.Geometry;
 using Newtonsoft.Json;
@@ -23,6 +24,8 @@ namespace ArcObjectJsonConverters.Tests
 
         public void Customize(IFixture fixture)
         {
+            fixture.Register(() => new GeoJsonSerializerSettings());
+
             fixture.Customize<ISpatialReference>(x => x
                 .FromFactory(() => _defaultSpatialReference)
                 .OmitAutoProperties());
@@ -39,7 +42,8 @@ namespace ArcObjectJsonConverters.Tests
 
             fixture.Customize<ILine>(x => x
                 .FromFactory(() => _factory.CreateObject<Line>() as ILine)
-                .Without(w => w.SpatialReference));
+                .Without(w => w.SpatialReference)
+                .Do(g => g.SpatialReference = _defaultSpatialReference));
 
         }
     }

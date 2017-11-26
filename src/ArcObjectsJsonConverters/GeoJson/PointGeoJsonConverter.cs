@@ -21,7 +21,7 @@ namespace ArcObjectConverters.GeoJson
         
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
-            var geometry = GetOrCloneGeometry<IPoint>(value);
+            var geometry = (IPoint) PrepareGeometry(value);
 
             if (geometry == null || geometry.IsEmpty)
             {

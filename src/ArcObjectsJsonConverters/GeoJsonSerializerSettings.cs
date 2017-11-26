@@ -2,6 +2,8 @@
 {
     public class GeoJsonSerializerSettings
     {
+        public bool Simplify { get; set; } = true;
+
         public int Precision { get; set; } = 6;
 
         public double Tolerance { get; set; } = 0.001;
