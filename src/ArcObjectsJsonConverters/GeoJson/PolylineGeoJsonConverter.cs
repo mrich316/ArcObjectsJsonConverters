@@ -108,6 +108,9 @@ namespace ArcObjectConverters.GeoJson
             }
             else if (hasNonLinearSegments)
             {
+                // TODO: Simplify = false: we should not generalize the geometry, just its curved parts.
+                // We should do this, because Generalize might return only a subset of points if they
+                // fit in the tolerance given.
                 geometry.Generalize(_serializerSettings.Tolerance);
             }
 
