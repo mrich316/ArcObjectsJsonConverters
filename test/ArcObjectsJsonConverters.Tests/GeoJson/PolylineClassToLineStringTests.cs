@@ -1,4 +1,5 @@
 ﻿using System;
+using ArcObjectConverters;
 using ArcObjectConverters.GeoJson;
 using ESRI.ArcGIS.Geometry;
 using Newtonsoft.Json;
@@ -32,8 +33,12 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
         }
 
         [ArcObjectsTheory, ArcObjectsConventions(32188)]
-        public void NullFromPointReturnsNull(PolylineGeoJsonConverter sut, IPoint point)
+        public void NullFromPointReturnsNull(GeoJsonSerializerSettings serializerSettings, IPoint point)
         {
+            serializerSettings.Simplify = true;
+
+            var sut = new PolylineGeoJsonConverter(serializerSettings);
+
             var invalidPolyline = (IPolyline)_factory.CreateObject<Polyline>();
             invalidPolyline.ToPoint = point;
 
@@ -43,8 +48,12 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
         }
 
         [ArcObjectsTheory, ArcObjectsConventions(32188)]
-        public void NullToPointReturnsNull(PolylineGeoJsonConverter sut, IPoint point)
+        public void NullToPointReturnsNull(GeoJsonSerializerSettings serializerSettings, IPoint point)
         {
+            serializerSettings.Simplify = true;
+
+            var sut = new PolylineGeoJsonConverter(serializerSettings);
+
             var invalidPolyline = (IPolyline)_factory.CreateObject<Polyline>();
             invalidPolyline.FromPoint = point;
 
@@ -126,8 +135,12 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
         }
 
         [ArcObjectsTheory, ArcObjectsConventions(32188)]
-        public void InvalidSegmentIsRemoved(PolylineGeoJsonConverter sut, ILine line, IPoint otherPoint, ISpatialReference spatialReference)
+        public void InvalidSegmentIsRemoved(GeoJsonSerializerSettings serializerSettings, ILine line, IPoint otherPoint, ISpatialReference spatialReference)
         {
+            serializerSettings.Simplify = true;
+
+            var sut = new PolylineGeoJsonConverter(serializerSettings);
+
             var otherLine = (ILine)_factory.CreateObject<Line>();
             otherLine.FromPoint = otherPoint;
 
@@ -161,8 +174,12 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
         }
 
         [ArcObjectsTheory, ArcObjectsConventions(32188)]
-        public void OverlappedSegmentIsRemoved(PolylineGeoJsonConverter sut, ILine line, IPoint midPoint, IPoint extensionPoint, ISpatialReference spatialReference)
+        public void OverlappedSegmentIsRemoved(GeoJsonSerializerSettings serializerSettings, ILine line, IPoint midPoint, IPoint extensionPoint, ISpatialReference spatialReference)
         {
+            serializerSettings.Simplify = true;
+
+            var sut = new PolylineGeoJsonConverter(serializerSettings);
+
             // Find the midpoint to create the FromPoint of the overlapped segment.
             line.QueryPoint(esriSegmentExtension.esriNoExtension, 0.5, true, midPoint);
 

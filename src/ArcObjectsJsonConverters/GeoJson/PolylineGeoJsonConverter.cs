@@ -1,4 +1,5 @@
 ﻿using System;
+using ESRI.ArcGIS.esriSystem;
 using ESRI.ArcGIS.Geometry;
 using Newtonsoft.Json;
 
@@ -88,34 +89,38 @@ namespace ArcObjectConverters.GeoJson
 
         protected override object PrepareGeometry(object value)
         {
-            var geometry = (IPolyline) base.PrepareGeometry(value);
+            if (value == null) return null;
+
+            var hasNonLinearSegments = false;
+            ((ISegmentCollection) value).HasNonLinearSegments(ref hasNonLinearSegments);
+
+            var geometry = !_serializerSettings.SerializerHasSideEffects && _serializerSettings.Simplify && hasNonLinearSegments
+                ? (IPolyline) ((IClone) value).Clone()
+                : (IPolyline) value;
 
             if (_serializerSettings.Simplify)
             {
-                var topo = (ITopologicalOperator2)geometry;
+                var topo = (ITopologicalOperator2) geometry;
                 topo.IsKnownSimple_2 = false;
+                topo.Simplify();
 
-                try
-                {
-                    topo.Simplify();
-                    geometry.Generalize(_serializerSettings.Tolerance);
-                }
-                finally
-                {
-                    topo.Simplify();
-                }
+                geometry.Generalize(_serializerSettings.Tolerance);
+            }
+            else if (hasNonLinearSegments)
+            {
+                geometry.Generalize(_serializerSettings.Tolerance);
             }
 
             return geometry;
         }
 
-        private void WriteLineStringArray(JsonWriter writer, IPointCollection collection, JsonSerializer serializer)
+        private void WriteLineStringArray(JsonWriter writer, IPointCollection lineString, JsonSerializer serializer)
         {
             writer.WriteStartArray();
 
-            for (int i = 0, n = collection.PointCount; i < n; i++)
+            for (int i = 0, n = lineString.PointCount; i < n; i++)
             {
-                WritePositionArray(writer, collection.Point[i], serializer);
+                WritePositionArray(writer, lineString.Point[i], serializer);
             }
 
             writer.WriteEndArray();

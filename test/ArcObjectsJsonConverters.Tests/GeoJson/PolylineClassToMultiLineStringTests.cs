@@ -12,21 +12,19 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
         private readonly IArcObjectFactory _factory = new ClientArcObjectFactory();
 
         [ArcObjectsTheory, ArcObjectsConventions(32188)]
-        public void NonTouchingPathsReturnsJson(PolylineGeoJsonConverter sut, ILine line, IPoint otherPoint, ISpatialReference spatialReference)
+        public void NonTouchingPathsReturnsJson(PolylineGeoJsonConverter sut, ILine line, ILine otherLine, ISpatialReference spatialReference)
         {
-            // Connect line with other point.
-            var otherLine = (ILine)_factory.CreateObject<Line>();
-            otherLine.FromPoint = line.ToPoint;
-            otherLine.ToPoint = otherPoint;
-
             object missing = Type.Missing;
 
-            var path = (ISegmentCollection)_factory.CreateObject<Path>();
-            path.AddSegment((ISegment)line, missing, missing);
-            path.AddSegment((ISegment)otherLine, missing, missing);
+            var path1 = (ISegmentCollection)_factory.CreateObject<Path>();
+            path1.AddSegment((ISegment)line, missing, missing);
+
+            var path2 = (ISegmentCollection)_factory.CreateObject<Path>();
+            path2.AddSegment((ISegment)otherLine, missing, missing);
 
             var polyline = (IGeometryCollection)_factory.CreateObject<Polyline>();
-            polyline.AddGeometry((IGeometry)path);
+            polyline.AddGeometry((IGeometry)path1);
+            polyline.AddGeometry((IGeometry)path2);
 
             ((IGeometry)polyline).SpatialReference = spatialReference;
 
@@ -35,16 +33,24 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
   ""type"": ""MultiLineString"",
   ""coordinates"": [
     [
-      {line.FromPoint.X.ToJsonString()},
-      {line.FromPoint.Y.ToJsonString()}
+      [
+        {line.FromPoint.X.ToJsonString()},
+        {line.FromPoint.Y.ToJsonString()}
+      ],
+      [
+        {line.ToPoint.X.ToJsonString()},
+        {line.ToPoint.Y.ToJsonString()}
+      ]
     ],
     [
-      {line.ToPoint.X.ToJsonString()},
-      {line.ToPoint.Y.ToJsonString()}
-    ],
-    [
-      {otherPoint.X.ToJsonString()},
-      {otherPoint.Y.ToJsonString()}
+      [
+        {otherLine.FromPoint.X.ToJsonString()},
+        {otherLine.FromPoint.Y.ToJsonString()}
+      ],
+      [
+        {otherLine.ToPoint.X.ToJsonString()},
+        {otherLine.ToPoint.Y.ToJsonString()}
+      ]
     ]
   ]
 }}";

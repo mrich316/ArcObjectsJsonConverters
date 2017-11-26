@@ -2,7 +2,7 @@
 {
     public class GeoJsonSerializerSettings
     {
-        public bool Simplify { get; set; } = true;
+        public bool Simplify { get; set; }
 
         public int Precision { get; set; } = 6;
 
