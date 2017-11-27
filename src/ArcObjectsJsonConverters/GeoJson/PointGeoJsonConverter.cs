@@ -29,15 +29,7 @@ namespace ArcObjectConverters.GeoJson
             }
             else
             {
-                writer.WriteStartObject();
-
-                writer.WritePropertyName("type");
-                writer.WriteValue("Point");
-
-                writer.WritePropertyName("coordinates");
-                WritePositionArray(writer, geometry, serializer);
-
-                writer.WriteEndObject();
+                WritePointObject(writer, geometry, serializer);
             }
         }
 

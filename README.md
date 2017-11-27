@@ -23,24 +23,35 @@ as possible and always assume the worst case scenario: a half baked geometry.
 
 Before serializing a geometry to `json`, a converter will (if possible):
 - serialize empty geometries as `null`
-- remove lines with less than 2 points
-- remove polygons with less than 4 points
+- remove paths with less than 2 points
+- remove rings with less than 4 points
 - change non-simple geometries to simple ones
 - auto-correct self-intersections and segment overlaps
 - adjust ring orientations: counter clock-wise for exterior rings,
   clock-wise for holes
-- set the geometry type to its "proper" value
+- downgrade the geometry type to its "proper" value (see conversion table below)
 - generalize paths/rings containing true curves when appropriate
 
 At last, if nothing can be done to serialize the geometry, the converter will
 complain by throwing an exception.
 
+## Conversion Table for ArcObjects to GeoJson
+
+| Source ArcObject Geometry | Destination GeoJson Type
+----------------------------|-------------------------
+Point (without coords) | null
+Polyline (with a single point) | Point (Simplify=false) or null (Simplify=true)
+Polyline (single path) | LineString
+Polyline (many paths) | MultiLineString
+Polyline (path + incomplete path (single point) | LineString (incomplete path removed)
+Polyline (many paths + incomplete path (single point) | MultiLineString (incomplete path removed)
+
 ## Status
 
 |Geometry  |Serialization|Deserialization|Notes|
 -----------|------|------|---
-Point      | done | todo | Needs more tests.
-Polyline   | done | todo | Needs more tests, supports only single-part at the moment.
+Point      | done | todo |
+Polyline   | done | todo | Needs more tests, supports non-curved segments only
 Polygon    | todo | todo |
 MultiPoint | todo | todo |
 

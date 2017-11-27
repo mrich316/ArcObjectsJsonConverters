@@ -57,5 +57,43 @@ namespace ArcObjectConverters.GeoJson
 
             writer.WriteEndArray();
         }
+
+        protected void WritePointObject(JsonWriter writer, IPoint point, JsonSerializer serializer)
+        {
+            writer.WriteStartObject();
+
+            writer.WritePropertyName("type");
+            writer.WriteValue("Point");
+
+            writer.WritePropertyName("coordinates");
+            WritePositionArray(writer, point, serializer);
+
+            writer.WriteEndObject();
+        }
+
+        protected void WriteLineStringCoordinatesArray(JsonWriter writer, IPointCollection lineString, JsonSerializer serializer)
+        {
+            writer.WriteStartArray();
+
+            for (int i = 0, n = lineString.PointCount; i < n; i++)
+            {
+                WritePositionArray(writer, lineString.Point[i], serializer);
+            }
+
+            writer.WriteEndArray();
+        }
+
+        protected void WriteLineStringObject(JsonWriter writer, IPointCollection lineString, JsonSerializer serializer)
+        {
+            writer.WriteStartObject();
+
+            writer.WritePropertyName("type");
+            writer.WriteValue("LineString");
+
+            writer.WritePropertyName("coordinates");
+            WriteLineStringCoordinatesArray(writer, lineString, serializer);
+
+            writer.WriteEndObject();
+        }
     }
 }

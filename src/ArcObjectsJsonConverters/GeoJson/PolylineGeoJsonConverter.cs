@@ -34,12 +34,11 @@ namespace ArcObjectConverters.GeoJson
                 return;
             }
 
-            writer.WriteStartObject();
-
             var collection = (IGeometryCollection) geometry;
 
             if (collection.GeometryCount > 1)
             {
+                writer.WriteStartObject();
                 writer.WritePropertyName("type");
                 writer.WriteValue("MultiLineString");
 
@@ -48,33 +47,32 @@ namespace ArcObjectConverters.GeoJson
 
                 for (int i = 0, n = collection.GeometryCount; i < n; i++)
                 {
-                    WriteLineStringArray(writer, (IPointCollection) collection.Geometry[i], serializer);
+                    var points = (IPointCollection) collection.Geometry[i];
+
+                    // Skip incomplete path (a single point)
+                    if (points.PointCount > 1)
+                    {
+                        WriteLineStringCoordinatesArray(writer, points, serializer);
+                    }
                 }
 
                 writer.WriteEndArray();
+                writer.WriteEndObject();
             }
             else
             {
-                writer.WritePropertyName("type");
-
                 var points = (IPointCollection) geometry;
+
                 if (points.PointCount == 1)
                 {
-                    writer.WriteValue("Point");
-
-                    writer.WritePropertyName("coordinates");
-                    WritePositionArray(writer, points.Point[0], serializer);
+                    // Incomplete path (it's a single point)
+                    WritePointObject(writer, points.Point[0], serializer);
                 }
                 else
                 {
-                    writer.WriteValue("LineString");
-
-                    writer.WritePropertyName("coordinates");
-                    WriteLineStringArray(writer, points, serializer);
+                    WriteLineStringObject(writer, points, serializer);
                 }
             }
-
-            writer.WriteEndObject();
         }
 
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
@@ -109,25 +107,12 @@ namespace ArcObjectConverters.GeoJson
             else if (hasNonLinearSegments)
             {
                 // TODO: Simplify = false: we should not generalize the geometry, just its curved parts.
-                // We should do this, because Generalize might return only a subset of points if they
-                // fit in the tolerance given.
+                // We should do this, because Generalize will return only a subset of points if they
+                // fit in the tolerance given (no matter if it's a line or a curve).
                 geometry.Generalize(_serializerSettings.Tolerance);
             }
 
             return geometry;
         }
-
-        private void WriteLineStringArray(JsonWriter writer, IPointCollection lineString, JsonSerializer serializer)
-        {
-            writer.WriteStartArray();
-
-            for (int i = 0, n = lineString.PointCount; i < n; i++)
-            {
-                WritePositionArray(writer, lineString.Point[i], serializer);
-            }
-
-            writer.WriteEndArray();
-        }
-
     }
 }
