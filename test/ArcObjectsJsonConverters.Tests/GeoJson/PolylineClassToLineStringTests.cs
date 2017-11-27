@@ -11,12 +11,12 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
 {
     public class PolylineClassToLineStringTests
     {
-        private readonly IArcObjectFactory _factory = new ClientArcObjectFactory();
+        private static readonly IArcObjectFactory Factory = new ClientArcObjectFactory();
 
         [ArcObjectsTheory, ArcObjectsConventions(32188)]
         public void EmptyReturnsNull(PolylineGeoJsonConverter sut)
         {
-            var polyline = (IPolyline)_factory.CreateObject<Polyline>();
+            var polyline = (IPolyline)Factory.CreateObject<Polyline>();
             polyline.SetEmpty();
 
             var actual = JsonConvert.SerializeObject(polyline, sut);
@@ -32,48 +32,19 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
             Assert.Equal("null", actual);
         }
 
-        [ArcObjectsTheory, ArcObjectsConventions(32188)]
-        public void NullFromPointReturnsNull(GeoJsonSerializerSettings serializerSettings, IPoint point)
-        {
-            serializerSettings.Simplify = true;
-
-            var sut = new PolylineGeoJsonConverter(serializerSettings);
-
-            var invalidPolyline = (IPolyline)_factory.CreateObject<Polyline>();
-            invalidPolyline.ToPoint = point;
-
-            var actual = JsonConvert.SerializeObject(invalidPolyline, Formatting.Indented, sut);
-
-            Assert.Equal("null", actual);
-        }
 
         [ArcObjectsTheory, ArcObjectsConventions(32188)]
-        public void NullToPointReturnsNull(GeoJsonSerializerSettings serializerSettings, IPoint point)
+        public void LineReturnsLineString(PolylineGeoJsonConverter sut, ILine line, ISpatialReference spatialReference)
         {
-            serializerSettings.Simplify = true;
-
-            var sut = new PolylineGeoJsonConverter(serializerSettings);
-
-            var invalidPolyline = (IPolyline)_factory.CreateObject<Polyline>();
-            invalidPolyline.FromPoint = point;
-
-            var actual = JsonConvert.SerializeObject(invalidPolyline, Formatting.Indented, sut);
-
-            Assert.Equal("null", actual);
-        }
-
-        [ArcObjectsTheory, ArcObjectsConventions(32188)]
-        public void LineReturnsJson(PolylineGeoJsonConverter sut, ILine line, ISpatialReference spatialReference)
-        {
-            var polyline = (IGeometry)_factory.CreateObject<Polyline>();
+            var polyline = (IGeometry)Factory.CreateObject<Polyline>();
             polyline.SpatialReference = spatialReference;
 
-            var path = (ISegmentCollection)_factory.CreateObject<Path>();
+            var path = (ISegmentCollection)Factory.CreateObject<Path>();
 
             object missing = Type.Missing;
-            path.AddSegment((ISegment) line, missing, missing);
+            path.AddSegment((ISegment)line, missing, missing);
 
-            ((IGeometryCollection) polyline).AddGeometry((IGeometry) path, missing, missing);
+            ((IGeometryCollection)polyline).AddGeometry((IGeometry)path, missing, missing);
 
             var actual = JsonConvert.SerializeObject(polyline, Formatting.Indented, sut);
             var expected = $@"{{
@@ -94,20 +65,20 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
         }
 
         [ArcObjectsTheory, ArcObjectsConventions(32188)]
-        public void PathWithConnectedSegmentsReturnsJson(PolylineGeoJsonConverter sut, ILine line, IPoint otherPoint, ISpatialReference spatialReference)
+        public void PathWithConnectedSegmentsReturnsLineString(PolylineGeoJsonConverter sut, ILine line, IPoint otherPoint, ISpatialReference spatialReference)
         {
             // Connect line with other point.
-            var otherLine = (ILine)_factory.CreateObject<Line>();
+            var otherLine = (ILine)Factory.CreateObject<Line>();
             otherLine.FromPoint = line.ToPoint;
             otherLine.ToPoint = otherPoint;
 
             object missing = Type.Missing;
 
-            var path = (ISegmentCollection)_factory.CreateObject<Path>();
+            var path = (ISegmentCollection)Factory.CreateObject<Path>();
             path.AddSegment((ISegment)line, missing, missing);
             path.AddSegment((ISegment)otherLine, missing, missing);
 
-            var polyline = (IGeometryCollection)_factory.CreateObject<Polyline>();
+            var polyline = (IGeometryCollection)Factory.CreateObject<Polyline>();
             polyline.AddGeometry((IGeometry)path);
 
             ((IGeometry)polyline).SpatialReference = spatialReference;
@@ -134,29 +105,62 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
             JsonAssert.Equal(expected, actual);
         }
 
-        [ArcObjectsTheory, ArcObjectsConventions(32188)]
-        public void InvalidSegmentIsRemoved(GeoJsonSerializerSettings serializerSettings, ILine line, IPoint otherPoint, ISpatialReference spatialReference)
+        public class SimplifyTrue
         {
-            serializerSettings.Simplify = true;
+            [ArcObjectsTheory, ArcObjectsConventions(32188)]
+            public void NullFromPointReturnsNull(GeoJsonSerializerSettings serializerSettings, IPoint point)
+            {
+                serializerSettings.Simplify = true;
 
-            var sut = new PolylineGeoJsonConverter(serializerSettings);
+                var sut = new PolylineGeoJsonConverter(serializerSettings);
 
-            var otherLine = (ILine)_factory.CreateObject<Line>();
-            otherLine.FromPoint = otherPoint;
+                var invalidPolyline = (IPolyline) Factory.CreateObject<Polyline>();
+                invalidPolyline.ToPoint = point;
 
-            object missing = Type.Missing;
+                var actual = JsonConvert.SerializeObject(invalidPolyline, Formatting.Indented, sut);
 
-            var path = (ISegmentCollection)_factory.CreateObject<Path>();
-            path.AddSegment((ISegment)line, missing, missing);
-            path.AddSegment((ISegment)otherLine, missing, missing);
+                Assert.Equal("null", actual);
+            }
 
-            var polyline = (IGeometryCollection)_factory.CreateObject<Polyline>();
-            polyline.AddGeometry((IGeometry)path);
+            [ArcObjectsTheory, ArcObjectsConventions(32188)]
+            public void NullToPointReturnsNull(GeoJsonSerializerSettings serializerSettings, IPoint point)
+            {
+                serializerSettings.Simplify = true;
 
-            ((IGeometry)polyline).SpatialReference = spatialReference;
+                var sut = new PolylineGeoJsonConverter(serializerSettings);
 
-            var actual = JsonConvert.SerializeObject(polyline, Formatting.Indented, sut);
-            var expected = $@"{{
+                var invalidPolyline = (IPolyline) Factory.CreateObject<Polyline>();
+                invalidPolyline.FromPoint = point;
+
+                var actual = JsonConvert.SerializeObject(invalidPolyline, Formatting.Indented, sut);
+
+                Assert.Equal("null", actual);
+            }
+
+            [ArcObjectsTheory, ArcObjectsConventions(32188)]
+            public void InvalidSegmentIsRemoved(GeoJsonSerializerSettings serializerSettings, ILine line,
+                IPoint otherPoint, ISpatialReference spatialReference)
+            {
+                serializerSettings.Simplify = true;
+
+                var sut = new PolylineGeoJsonConverter(serializerSettings);
+
+                var otherLine = (ILine) Factory.CreateObject<Line>();
+                otherLine.FromPoint = otherPoint;
+
+                object missing = Type.Missing;
+
+                var path = (ISegmentCollection) Factory.CreateObject<Path>();
+                path.AddSegment((ISegment) line, missing, missing);
+                path.AddSegment((ISegment) otherLine, missing, missing);
+
+                var polyline = (IGeometryCollection) Factory.CreateObject<Polyline>();
+                polyline.AddGeometry((IGeometry) path);
+
+                ((IGeometry) polyline).SpatialReference = spatialReference;
+
+                var actual = JsonConvert.SerializeObject(polyline, Formatting.Indented, sut);
+                var expected = $@"{{
   ""type"": ""LineString"",
   ""coordinates"": [
     [
@@ -170,39 +174,41 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
   ]
 }}";
 
-            JsonAssert.Equal(expected, actual);
-        }
+                JsonAssert.Equal(expected, actual);
+            }
 
-        [ArcObjectsTheory, ArcObjectsConventions(32188)]
-        public void OverlappedSegmentIsRemoved(GeoJsonSerializerSettings serializerSettings, ILine line, IPoint midPoint, IPoint extensionPoint, ISpatialReference spatialReference)
-        {
-            serializerSettings.Simplify = true;
+            [ArcObjectsTheory, ArcObjectsConventions(32188)]
+            public void OverlappedSegmentIsRemoved(GeoJsonSerializerSettings serializerSettings, ILine line,
+                IPoint midPoint, IPoint extensionPoint, ISpatialReference spatialReference)
+            {
+                serializerSettings.Simplify = true;
 
-            var sut = new PolylineGeoJsonConverter(serializerSettings);
+                var sut = new PolylineGeoJsonConverter(serializerSettings);
 
-            // Find the midpoint to create the FromPoint of the overlapped segment.
-            line.QueryPoint(esriSegmentExtension.esriNoExtension, 0.5, true, midPoint);
+                // Find the midpoint to create the FromPoint of the overlapped segment.
+                line.QueryPoint(esriSegmentExtension.esriNoExtension, 0.5, true, midPoint);
 
-            // Extend pass the endpoint to create to ToPoint of the overlapped segment.
-            line.QueryPoint(esriSegmentExtension.esriExtendAtTo, line.Length + line.Length / 2, false, extensionPoint);
+                // Extend pass the endpoint to create to ToPoint of the overlapped segment.
+                line.QueryPoint(esriSegmentExtension.esriExtendAtTo, line.Length + line.Length / 2, false,
+                    extensionPoint);
 
-            var overlappedLine = (ILine)_factory.CreateObject<Line>();
-            overlappedLine.FromPoint = midPoint;
-            overlappedLine.ToPoint = extensionPoint;
+                var overlappedLine = (ILine) Factory.CreateObject<Line>();
+                overlappedLine.FromPoint = midPoint;
+                overlappedLine.ToPoint = extensionPoint;
 
-            object missing = Type.Missing;
+                object missing = Type.Missing;
 
-            var path = (ISegmentCollection)_factory.CreateObject<Path>();
-            path.AddSegment((ISegment)line, missing, missing);
-            path.AddSegment((ISegment)overlappedLine, missing, missing);
+                var path = (ISegmentCollection) Factory.CreateObject<Path>();
+                path.AddSegment((ISegment) line, missing, missing);
+                path.AddSegment((ISegment) overlappedLine, missing, missing);
 
-            var polyline = (IGeometryCollection)_factory.CreateObject<Polyline>();
-            polyline.AddGeometry((IGeometry)path);
+                var polyline = (IGeometryCollection) Factory.CreateObject<Polyline>();
+                polyline.AddGeometry((IGeometry) path);
 
-            ((IGeometry)polyline).SpatialReference = spatialReference;
+                ((IGeometry) polyline).SpatialReference = spatialReference;
 
-            var actual = JsonConvert.SerializeObject(polyline, Formatting.Indented, sut);
-            var expected = $@"{{
+                var actual = JsonConvert.SerializeObject(polyline, Formatting.Indented, sut);
+                var expected = $@"{{
   ""type"": ""LineString"",
   ""coordinates"": [
     [
@@ -216,7 +222,54 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
   ]
 }}";
 
-            JsonAssert.Equal(expected, actual);
+                JsonAssert.Equal(expected, actual);
+            }
+
+            [ArcObjectsTheory, ArcObjectsConventions(32188)]
+            public void TouchingPathsReturnsLineString(GeoJsonSerializerSettings serializerSettings, ILine line, IPoint point, ISpatialReference spatialReference)
+            {
+                serializerSettings.Simplify = true;
+                var sut = new PolylineGeoJsonConverter(serializerSettings);
+
+                object missing = Type.Missing;
+
+                var path1 = (ISegmentCollection)Factory.CreateObject<Path>();
+                path1.AddSegment((ISegment)line, missing, missing);
+
+                var otherLine = (ILine)Factory.CreateObject<Line>();
+                otherLine.FromPoint = line.ToPoint;
+                otherLine.ToPoint = point;
+
+                var path2 = (ISegmentCollection)Factory.CreateObject<Path>();
+                path2.AddSegment((ISegment)otherLine, missing, missing);
+
+                var polyline = (IGeometryCollection)Factory.CreateObject<Polyline>();
+                polyline.AddGeometry((IGeometry)path1);
+                polyline.AddGeometry((IGeometry)path2);
+
+                ((IGeometry)polyline).SpatialReference = spatialReference;
+
+                var actual = JsonConvert.SerializeObject(polyline, Formatting.Indented, sut);
+                var expected = $@"{{
+  ""type"": ""LineString"",
+  ""coordinates"": [
+    [
+      {line.FromPoint.X.ToJsonString()},
+      {line.FromPoint.Y.ToJsonString()}
+    ],
+    [
+      {line.ToPoint.X.ToJsonString()},
+      {line.ToPoint.Y.ToJsonString()}
+    ],
+    [
+      {point.X.ToJsonString()},
+      {point.Y.ToJsonString()}
+    ]
+  ]
+}}";
+
+                JsonAssert.Equal(expected, actual);
+            }
         }
     }
 }
