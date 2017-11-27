@@ -1,6 +1,7 @@
 ﻿using System;
 using ArcObjectConverters;
 using ArcObjectConverters.GeoJson;
+using ESRI.ArcGIS.esriSystem;
 using ESRI.ArcGIS.Geometry;
 using Newtonsoft.Json;
 using VL.ArcObjectsApi;
@@ -15,17 +16,15 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
         [ArcObjectsTheory, ArcObjectsConventions(32188)]
         public void TouchingPathsReturnsMultiLineString(PolylineGeoJsonConverter sut, ILine line, IPoint point, ISpatialReference spatialReference)
         {
-            object missing = Type.Missing;
-
             var path1 = (ISegmentCollection)Factory.CreateObject<Path>();
-            path1.AddSegment((ISegment)line, missing, missing);
+            path1.AddSegment((ISegment)line);
 
             var otherLine = (ILine) Factory.CreateObject<Line>();
             otherLine.FromPoint = line.ToPoint;
             otherLine.ToPoint = point;
 
             var path2 = (ISegmentCollection)Factory.CreateObject<Path>();
-            path2.AddSegment((ISegment)otherLine, missing, missing);
+            path2.AddSegment((ISegment)otherLine);
 
             var polyline = (IGeometryCollection)Factory.CreateObject<Polyline>();
             polyline.AddGeometry((IGeometry)path1);
@@ -66,13 +65,11 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
         [ArcObjectsTheory, ArcObjectsConventions(32188)]
         public void NonTouchingPathsReturnsMultiLineString(PolylineGeoJsonConverter sut, ILine line, ILine otherLine, ISpatialReference spatialReference)
         {
-            object missing = Type.Missing;
-
             var path1 = (ISegmentCollection)Factory.CreateObject<Path>();
-            path1.AddSegment((ISegment)line, missing, missing);
+            path1.AddSegment((ISegment)line);
 
             var path2 = (ISegmentCollection)Factory.CreateObject<Path>();
-            path2.AddSegment((ISegment)otherLine, missing, missing);
+            path2.AddSegment((ISegment)otherLine);
 
             var polyline = (IGeometryCollection)Factory.CreateObject<Polyline>();
             polyline.AddGeometry((IGeometry)path1);
@@ -110,6 +107,47 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
             JsonAssert.Equal(expected, actual);
         }
 
+        [ArcObjectsFact, ArcObjectsConventions(32188)]
+        public void CurvesInEveryPathsAreGeneralized()
+        {
+            throw new NotImplementedException();
+        }
+
+        [ArcObjectsTheory, ArcObjectsConventions(32188)]
+        public void OnlyCurvesAreGeneralized(IPolyline polyline, ILine line, ILine otherLine, IPoint extensionPoint, IBezierCurve bezier)
+        {
+            var serializerSettings = new GeoJsonSerializerSettings();
+            var sut = new PolylineGeoJsonConverter(serializerSettings);
+
+            // Create {otherLine} that is an extension to {line}.
+            // This segment must not be simplified during the serialization.
+            line.QueryPoint(esriSegmentExtension.esriExtendAtTo, line.Length + line.Length / 2, false, extensionPoint);
+            otherLine.PutCoords(line.ToPoint, extensionPoint);
+
+            // Prepare the actual test value.
+            polyline.SetEmpty();
+
+            var segments1 = (ISegmentCollection)Factory.CreateObject<Path>();
+            segments1.AddSegment((ISegment) line);
+            segments1.AddSegment((ISegment) otherLine);
+
+            var segments2 = (ISegmentCollection)Factory.CreateObject<Path>();
+            segments2.AddSegment((ISegment) bezier);
+
+            ((IGeometryCollection)polyline).AddGeometry((IGeometry)segments1);
+            ((IGeometryCollection)polyline).AddGeometry((IGeometry)segments2);
+
+            var actual = JsonConvert.SerializeObject(polyline, Formatting.Indented, sut);
+
+            // It must contain the "mid" point between line.FromPoint and otherLine.ToPoint.
+            // If it is missing, the serialization merged the two segments even tho Simplify=false.
+            JsonAssert.Contains($@"
+[
+  {otherLine.FromPoint.X.ToJsonString()},
+  {otherLine.FromPoint.Y.ToJsonString()}
+]", actual);
+        }
+
         public class SimplifyTrue
         {
             [ArcObjectsTheory, ArcObjectsConventions(32188)]
@@ -118,13 +156,11 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
                 serializerSettings.Simplify = true;
                 var sut = new PolylineGeoJsonConverter(serializerSettings);
 
-                object missing = Type.Missing;
-
                 var path1 = (ISegmentCollection)Factory.CreateObject<Path>();
-                path1.AddSegment((ISegment)line, missing, missing);
+                path1.AddSegment((ISegment)line);
 
                 var path2 = (ISegmentCollection)Factory.CreateObject<Path>();
-                path2.AddSegment((ISegment)otherLine, missing, missing);
+                path2.AddSegment((ISegment)otherLine);
 
                 var polyline = (IGeometryCollection)Factory.CreateObject<Polyline>();
                 polyline.AddGeometry((IGeometry)path1);

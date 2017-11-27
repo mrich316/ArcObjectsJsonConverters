@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using ArcObjectConverters;
 using ArcObjectConverters.GeoJson;
 using ESRI.ArcGIS.Geometry;
@@ -45,6 +46,20 @@ namespace ArcObjectJsonConverters.Tests
                 .Without(w => w.SpatialReference)
                 .Do(g => g.SpatialReference = _defaultSpatialReference));
 
+            fixture.Customize<IBezierCurve>(x => x
+                .FromFactory(() =>
+                {
+                    var bezier = (IBezierCurveGEN) _factory.CreateObject<BezierCurve>();
+                    var controlPoints = Enumerable.Range(0, 4)
+                        .Select(i => fixture.Create<IPoint>())
+                        .ToArray();
+
+                    bezier.PutCoords(ref controlPoints);
+
+                    return (IBezierCurve)bezier;
+                })
+                .Without(w => w.SpatialReference)
+                .Do(g => g.SpatialReference = _defaultSpatialReference));
         }
     }
 }

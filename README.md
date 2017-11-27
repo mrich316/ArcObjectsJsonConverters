@@ -39,12 +39,13 @@ complain by throwing an exception.
 
 | Source ArcObject Geometry | Destination GeoJson Type
 ----------------------------|-------------------------
+Point                       | Point
 Point (without coords) | null
-Polyline (with a single point) | Point (Simplify=false) or null (Simplify=true)
+Polyline (incomplete path, ie: single point) | Point (Simplify=false) or null (Simplify=true)
 Polyline (single path) | LineString
 Polyline (many paths) | MultiLineString
 Polyline (path + incomplete path (single point) | LineString (incomplete path removed)
-Polyline (many paths + incomplete path (single point) | MultiLineString (incomplete path removed)
+Polyline (many paths + incomplete path, ie: single point) | MultiLineString (incomplete path removed)
 
 ## Status
 
