@@ -1,6 +1,5 @@
 ﻿using System.Text;
 using ArcObjectConverters;
-using ArcObjectConverters.GeoJson;
 using ESRI.ArcGIS.Geometry;
 using Newtonsoft.Json;
 using VL.ArcObjectsApi;
@@ -13,7 +12,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
         private readonly IArcObjectFactory _factory = new ClientArcObjectFactory();
 
         [ArcObjectsTheory, ArcObjectsConventions(32188)]
-        public void ManySinglePointsReturnsMultiPoint(PolylineGeoJsonConverter sut, IPolyline polyline, IPoint[] points)
+        public void ManySinglePointsReturnsMultiPoint(GeoJsonConverter sut, IPolyline polyline, IPoint[] points)
         {
             polyline.SetEmpty();
 

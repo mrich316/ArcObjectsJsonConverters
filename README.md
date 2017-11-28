@@ -40,23 +40,23 @@ complain by throwing an exception.
 
 | Source ArcObject Geometry | Destination GeoJson Type
 ----------------------------|-------------------------
-Point                       | Point
-Point (without coords) | null
-Polyline (incomplete path, ie: single point) | Point (Simplify=false) or null (Simplify=true)
-Polyline (single path) | LineString
-Polyline (many paths) | MultiLineString
-Polyline (many incomplete paths) | MultiPoint (Simplify=false) or null (Simplify=true)
-Polyline (path + incomplete path (single point) | LineString (incomplete path removed)
-Polyline (many paths + incomplete path, ie: single point) | MultiLineString (incomplete path removed)
+`Point`                     | `Point`
+`Point` (without coords)    | `null`
+`Polyline` (incomplete path, ie: single point) | `Point` (`Simplify=false`) or `null` (`Simplify=true`)
+`Polyline` (single path) | `LineString`
+`Polyline` (many paths) | `MultiLineString`
+`Polyline` (many incomplete paths) | `MultiPoint` (`Simplify=false`) or `null` (`Simplify=true`)
+`Polyline` (path + incomplete path (single point) | `LineString` (incomplete path removed)
+`Polyline` (many paths + incomplete path, ie: single point) | `MultiLineString` (incomplete path removed)
 
 ## Status
 
-|Geometry  |Serialization|Deserialization|Notes|
------------|------|------|---
-Point      | done | todo |
-Polyline   | done | todo | Needs more tests. Polyline to MultiPoint not implemented.
-Polygon    | todo | todo |
-MultiPoint | todo | todo |
+|Geometry    |Serialization|Deserialization|Notes|
+-------------|------|------|---
+`Point`      | done | todo |
+`Polyline`   | done | todo | Needs more tests. Polyline to MultiPoint not implemented.
+`Polygon`    | todo | todo |
+`MultiPoint` | todo | todo |
 
 A [nuget](https://nuget.org/) could be made when a geometry will support
 serialization and deserialization.

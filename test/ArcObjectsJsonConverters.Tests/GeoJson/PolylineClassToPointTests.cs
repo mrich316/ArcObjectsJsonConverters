@@ -1,5 +1,4 @@
 ﻿using ArcObjectConverters;
-using ArcObjectConverters.GeoJson;
 using ESRI.ArcGIS.Geometry;
 using Newtonsoft.Json;
 using VL.ArcObjectsApi;
@@ -19,7 +18,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
             var polylineWithoutToPoint = (IPolyline) _factory.CreateObject<Polyline>();
             polylineWithoutToPoint.FromPoint = point;
 
-            var sut = new PolylineGeoJsonConverter(serializerSettings);
+            var sut = new GeoJsonConverter(serializerSettings);
             var actual = JsonConvert.SerializeObject(polylineWithoutToPoint, Formatting.Indented, sut);
             var expected = $@"{{
   ""type"": ""Point"",

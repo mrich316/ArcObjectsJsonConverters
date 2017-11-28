@@ -1,6 +1,5 @@
 ﻿using System;
 using ArcObjectConverters;
-using ArcObjectConverters.GeoJson;
 using ESRI.ArcGIS.Geometry;
 using Newtonsoft.Json;
 using VL.ArcObjectsApi;
@@ -13,7 +12,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
         private static readonly IArcObjectFactory Factory = new ClientArcObjectFactory();
 
         [ArcObjectsTheory, ArcObjectsConventions(32188)]
-        public void TouchingPathsReturnsMultiLineString(PolylineGeoJsonConverter sut, ILine line, IPoint point, ISpatialReference spatialReference)
+        public void TouchingPathsReturnsMultiLineString(GeoJsonConverter sut, ILine line, IPoint point, ISpatialReference spatialReference)
         {
             var path1 = (ISegmentCollection)Factory.CreateObject<Path>();
             path1.AddSegment((ISegment)line);
@@ -62,7 +61,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
         }
 
         [ArcObjectsTheory, ArcObjectsConventions(32188)]
-        public void NonTouchingPathsReturnsMultiLineString(PolylineGeoJsonConverter sut, ILine line, ILine otherLine, ISpatialReference spatialReference)
+        public void NonTouchingPathsReturnsMultiLineString(GeoJsonConverter sut, ILine line, ILine otherLine, ISpatialReference spatialReference)
         {
             var path1 = (ISegmentCollection)Factory.CreateObject<Path>();
             path1.AddSegment((ISegment)line);
@@ -116,7 +115,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
         public void OnlyCurvesAreGeneralized(IPolyline polyline, ILine line, ILine otherLine, IPoint extensionPoint, IBezierCurve bezier)
         {
             var serializerSettings = new GeoJsonSerializerSettings();
-            var sut = new PolylineGeoJsonConverter(serializerSettings);
+            var sut = new GeoJsonConverter(serializerSettings);
 
             // Create {otherLine} that is an extension to {line}.
             // This segment must not be simplified during the serialization.
@@ -153,7 +152,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
             public void NonTouchingPathsReturnsMultiLineString(GeoJsonSerializerSettings serializerSettings, ILine line, ILine otherLine, ISpatialReference spatialReference)
             {
                 serializerSettings.Simplify = true;
-                var sut = new PolylineGeoJsonConverter(serializerSettings);
+                var sut = new GeoJsonConverter(serializerSettings);
 
                 var path1 = (ISegmentCollection)Factory.CreateObject<Path>();
                 path1.AddSegment((ISegment)line);

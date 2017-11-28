@@ -1,11 +1,7 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using ArcObjectConverters;
-using ArcObjectConverters.GeoJson;
 using ESRI.ArcGIS.Geometry;
-using Newtonsoft.Json;
 using Ploeh.AutoFixture;
-using Ploeh.AutoFixture.Kernel;
 using VL.ArcObjectsApi;
 
 namespace ArcObjectJsonConverters.Tests

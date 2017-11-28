@@ -1,8 +1,6 @@
 ﻿using ArcObjectConverters;
-using ArcObjectConverters.GeoJson;
 using ESRI.ArcGIS.Geometry;
 using Newtonsoft.Json;
-using Ploeh.AutoFixture.Xunit2;
 using VL.ArcObjectsApi;
 using VL.ArcObjectsApi.Xunit2;
 using Xunit;
@@ -14,7 +12,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
         private readonly IArcObjectFactory _factory = new ClientArcObjectFactory();
 
         [ArcObjectsTheory, ArcObjectsConventions(32188)]
-        public void NullReturnsNull(PointGeoJsonConverter sut)
+        public void NullReturnsNull(GeoJsonConverter sut)
         {
             var actual = JsonConvert.SerializeObject((PointClass)null, sut);
 
@@ -22,7 +20,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
         }
 
         [ArcObjectsTheory, ArcObjectsConventions(32188)]
-        public void EmptyReturnsNull(IPoint point, PointGeoJsonConverter sut)
+        public void EmptyReturnsNull(IPoint point, GeoJsonConverter sut)
         {
             point.SetEmpty();
 
@@ -32,7 +30,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
         }
 
         [ArcObjectsTheory, ArcObjectsConventions(32188)]
-        public void NanXReturnsNull(IPoint point, PointGeoJsonConverter sut)
+        public void NanXReturnsNull(IPoint point, GeoJsonConverter sut)
         {
             point.X = double.NaN;
 
@@ -42,7 +40,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
         }
 
         [ArcObjectsTheory, ArcObjectsConventions(32188)]
-        public void NanYReturnsNull(IPoint point, PointGeoJsonConverter sut)
+        public void NanYReturnsNull(IPoint point, GeoJsonConverter sut)
         {
             point.Y = double.NaN;
 
@@ -57,7 +55,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
             ((IZAware)point).ZAware = false;
             point.Z = double.NaN;
 
-            var sut = new PointGeoJsonConverter(new GeoJsonSerializerSettings
+            var sut = new GeoJsonConverter(new GeoJsonSerializerSettings
             {
                 Dimensions = DimensionHandling.XYZ,
                 DefaultZValue = defaultZValue
@@ -79,7 +77,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
         [ArcObjectsTheory(Skip = "Too many branching to test +/- Infinity, should we really check that ?"), ArcObjectsConventions(32188)]
         public void InfinityCoordsReturnsNull(IPoint point)
         {
-            var sut = new PointGeoJsonConverter();
+            var sut = new GeoJsonConverter();
 
             point.Y = double.PositiveInfinity;
 
@@ -93,7 +91,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
         {
             ((IZAware) point).ZAware = false;
 
-            var sut = new PointGeoJsonConverter();
+            var sut = new GeoJsonConverter();
 
             var actual = JsonConvert.SerializeObject(point, Formatting.Indented, sut);
             var expected = $@"{{
@@ -114,7 +112,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
             {
                 Dimensions = DimensionHandling.XYZ
             };
-            var sut = new PointGeoJsonConverter(settings);
+            var sut = new GeoJsonConverter(settings);
 
             ((IZAware)point).ZAware = true;
 

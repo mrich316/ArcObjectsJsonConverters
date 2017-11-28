@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Globalization;
 using ArcObjectConverters;
-using ArcObjectConverters.GeoJson;
 
 namespace ArcObjectJsonConverters.Tests.GeoJson
 {

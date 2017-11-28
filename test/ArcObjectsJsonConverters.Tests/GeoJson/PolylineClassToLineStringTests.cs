@@ -1,5 +1,4 @@
 ﻿using ArcObjectConverters;
-using ArcObjectConverters.GeoJson;
 using ESRI.ArcGIS.esriSystem;
 using ESRI.ArcGIS.Geometry;
 using Newtonsoft.Json;
@@ -14,7 +13,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
         private static readonly IArcObjectFactory Factory = new ClientArcObjectFactory();
 
         [ArcObjectsTheory, ArcObjectsConventions(32188)]
-        public void EmptyReturnsNull(PolylineGeoJsonConverter sut)
+        public void EmptyReturnsNull(GeoJsonConverter sut)
         {
             var polyline = (IPolyline)Factory.CreateObject<Polyline>();
             polyline.SetEmpty();
@@ -25,7 +24,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
         }
 
         [ArcObjectsTheory, ArcObjectsConventions(32188)]
-        public void NullReturnsNull(PolylineGeoJsonConverter sut)
+        public void NullReturnsNull(GeoJsonConverter sut)
         {
             var actual = JsonConvert.SerializeObject((PolylineClass)null, sut);
 
@@ -34,7 +33,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
 
 
         [ArcObjectsTheory, ArcObjectsConventions(32188)]
-        public void LineReturnsLineString(PolylineGeoJsonConverter sut, ILine line, ISpatialReference spatialReference)
+        public void LineReturnsLineString(GeoJsonConverter sut, ILine line, ISpatialReference spatialReference)
         {
             var polyline = (IGeometry)Factory.CreateObject<Polyline>();
             polyline.SpatialReference = spatialReference;
@@ -64,7 +63,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
         }
 
         [ArcObjectsTheory, ArcObjectsConventions(32188)]
-        public void OneCompletePathWithManyIncompletePathsReturnLinestring(PolylineGeoJsonConverter sut, IPolyline polyline, ILine line, IPoint fromPoint)
+        public void OneCompletePathWithManyIncompletePathsReturnLinestring(GeoJsonConverter sut, IPolyline polyline, ILine line, IPoint fromPoint)
         {
             var emptyPath = (IPath)Factory.CreateObject<Path>();
 
@@ -107,7 +106,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
         }
 
         [ArcObjectsTheory, ArcObjectsConventions(32188)]
-        public void PathWithConnectedSegmentsReturnsLineString(PolylineGeoJsonConverter sut, ILine line, IPoint otherPoint, ISpatialReference spatialReference)
+        public void PathWithConnectedSegmentsReturnsLineString(GeoJsonConverter sut, ILine line, IPoint otherPoint, ISpatialReference spatialReference)
         {
             // Connect line with other point.
             var otherLine = (ILine)Factory.CreateObject<Line>();
@@ -152,7 +151,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
             {
                 serializerSettings.Simplify = true;
 
-                var sut = new PolylineGeoJsonConverter(serializerSettings);
+                var sut = new GeoJsonConverter(serializerSettings);
 
                 var invalidPolyline = (IPolyline) Factory.CreateObject<Polyline>();
                 invalidPolyline.ToPoint = point;
@@ -167,7 +166,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
             {
                 serializerSettings.Simplify = true;
 
-                var sut = new PolylineGeoJsonConverter(serializerSettings);
+                var sut = new GeoJsonConverter(serializerSettings);
 
                 var invalidPolyline = (IPolyline) Factory.CreateObject<Polyline>();
                 invalidPolyline.FromPoint = point;
@@ -183,7 +182,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
             {
                 serializerSettings.Simplify = true;
 
-                var sut = new PolylineGeoJsonConverter(serializerSettings);
+                var sut = new GeoJsonConverter(serializerSettings);
 
                 var otherLine = (ILine) Factory.CreateObject<Line>();
                 otherLine.FromPoint = otherPoint;
@@ -221,7 +220,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
             {
                 serializerSettings.Simplify = true;
 
-                var sut = new PolylineGeoJsonConverter(serializerSettings);
+                var sut = new GeoJsonConverter(serializerSettings);
 
                 // Find the midpoint to create the FromPoint of the overlapped segment.
                 line.QueryPoint(esriSegmentExtension.esriNoExtension, 0.5, true, midPoint);
@@ -265,7 +264,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
             public void TouchingPathsReturnsLineString(GeoJsonSerializerSettings serializerSettings, ILine line, IPoint point, ISpatialReference spatialReference)
             {
                 serializerSettings.Simplify = true;
-                var sut = new PolylineGeoJsonConverter(serializerSettings);
+                var sut = new GeoJsonConverter(serializerSettings);
 
                 var path1 = (ISegmentCollection)Factory.CreateObject<Path>();
                 path1.AddSegment((ISegment)line);

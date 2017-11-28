@@ -1,8 +1,8 @@
 ﻿using System;
 using ArcObjectConverters;
-using ArcObjectConverters.GeoJson;
 using ESRI.ArcGIS.Geometry;
 using Newtonsoft.Json;
+using VL.ArcObjectsApi;
 using VL.ArcObjectsApi.Xunit2;
 using Xunit;
 
@@ -10,43 +10,67 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
 {
     public class BaseGeoJsonConverterTests
     {
+        private static readonly IArcObjectFactory Factory = new ClientArcObjectFactory();
+
         [ArcObjectsFact]
         public void CtorThrowsOnNull()
         {
             Assert.Throws<ArgumentNullException>("serializerSettings", () => new TestGeoJsonConverter(null));
         }
 
-        public class GetOrCloneGeometry
+        public class PrepareGeometry
         {
             [ArcObjectsTheory, ArcObjectsConventions(32188)]
-            public void WithoutSideEffectsReturnSameInstance(IPoint expected)
+            public void WithoutSideEffectsReturnsClone(IPolyline expected, ILine line, IBezierCurve curve)
             {
-                var sut = new TestGeoJsonConverter(new GeoJsonSerializerSettings {SerializerHasSideEffects = false});
+                var path1 = (ISegmentCollection)Factory.CreateObject<Path>();
+                path1.AddSegment((ISegment) line);
+                ((IGeometryCollection)expected).AddGeometry((IGeometry)path1);
 
-                var actual = sut.TestGetOrCloneGeometry(expected);
+                var path2 = (ISegmentCollection)Factory.CreateObject<Path>();
+                path2.AddSegment((ISegment) curve);
+                ((IGeometryCollection) expected).AddGeometry((IGeometry) path2);
 
-                Assert.NotEqual(expected, actual);
+                var sut = new TestGeoJsonConverter(new GeoJsonSerializerSettings
+                {
+                    SerializerHasSideEffects = false,
+                    Simplify = true
+                });
+                var actual = sut.TestPrepareGeometry(expected);
+
+                Assert.NotSame(expected, actual);
             }
 
             [ArcObjectsTheory, ArcObjectsConventions(32188)]
-            public void WithSideEffectsReturnSameInstance(IPoint expected)
+            public void WithSideEffectsReturnsSameInstance(IPolyline expected, ILine line, IBezierCurve curve)
             {
-                var sut = new TestGeoJsonConverter(new GeoJsonSerializerSettings { SerializerHasSideEffects = true });
+                var path1 = (ISegmentCollection)Factory.CreateObject<Path>();
+                path1.AddSegment((ISegment)line);
+                ((IGeometryCollection)expected).AddGeometry((IGeometry)path1);
 
-                var actual = sut.TestGetOrCloneGeometry(expected);
+                var path2 = (ISegmentCollection)Factory.CreateObject<Path>();
+                path2.AddSegment((ISegment)curve);
+                ((IGeometryCollection)expected).AddGeometry((IGeometry)path2);
+
+                var sut = new TestGeoJsonConverter(new GeoJsonSerializerSettings
+                {
+                    SerializerHasSideEffects = true,
+                    Simplify = true
+                });
+                var actual = sut.TestPrepareGeometry(expected);
 
                 Assert.Same(expected, actual);
             }
         }
 
-        private class TestGeoJsonConverter : BaseGeoJsonConverter
+        private class TestGeoJsonConverter : GeoJsonConverter
         {
             public TestGeoJsonConverter(GeoJsonSerializerSettings serializerSettings)
                 : base(serializerSettings)
             {
             }
 
-            public object TestGetOrCloneGeometry(object value)
+            public IPolyline TestPrepareGeometry(IPolyline value)
             {
                 return PrepareGeometry(value);
             }
