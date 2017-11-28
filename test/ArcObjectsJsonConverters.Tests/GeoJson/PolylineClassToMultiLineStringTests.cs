@@ -1,7 +1,6 @@
 ﻿using System;
 using ArcObjectConverters;
 using ArcObjectConverters.GeoJson;
-using ESRI.ArcGIS.esriSystem;
 using ESRI.ArcGIS.Geometry;
 using Newtonsoft.Json;
 using VL.ArcObjectsApi;

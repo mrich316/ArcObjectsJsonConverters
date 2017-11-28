@@ -53,7 +53,7 @@ Polyline (many paths + incomplete path, ie: single point) | MultiLineString (inc
 |Geometry  |Serialization|Deserialization|Notes|
 -----------|------|------|---
 Point      | done | todo |
-Polyline   | done | todo | Needs more tests, supports non-curved segments only
+Polyline   | done | todo | Needs more tests. Polyline to MultiPoint not implemented.
 Polygon    | todo | todo |
 MultiPoint | todo | todo |
 
