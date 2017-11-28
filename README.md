@@ -21,7 +21,8 @@ its geometry type. More over, `IMultiPoint` can be empty or contain a single poi
 The converters work hard to make the serialization go as smooth and predictable
 as possible and always assume the worst case scenario: a half baked geometry.
 
-Before serializing a geometry to `json`, a converter will (if possible):
+Before serializing a geometry to `json`, a converter will (depending on
+`GeoJsonSerializerSettings`):
 - serialize empty geometries as `null`
 - remove paths with less than 2 points
 - remove rings with less than 4 points
