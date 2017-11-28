@@ -104,6 +104,7 @@
     <Compile Include="ArcObjectsCustomizations.cs" />
     <Compile Include="GeoJson\BaseGeoJsonConverterTests.cs" />
     <Compile Include="GeoJson\PolylineClassToMultiLineStringTests.cs" />
+    <Compile Include="GeoJson\PolylineClassToMultiPointTests.cs" />
     <Compile Include="GeoJson\PolylineClassToPointTests.cs" />
     <Compile Include="JsonAssert.cs" />
     <Compile Include="GeoJson\DoubleExtensions.cs" />

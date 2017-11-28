@@ -1,5 +1,4 @@
-﻿using System;
-using ArcObjectConverters;
+﻿using ArcObjectConverters;
 using ArcObjectConverters.GeoJson;
 using ESRI.ArcGIS.esriSystem;
 using ESRI.ArcGIS.Geometry;
@@ -67,18 +66,18 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
         [ArcObjectsTheory, ArcObjectsConventions(32188)]
         public void OneCompletePathWithManyIncompletePathsReturnLinestring(PolylineGeoJsonConverter sut, IPolyline polyline, ILine line, IPoint fromPoint)
         {
-            var incompletePath0 = (IPath)Factory.CreateObject<Path>();
+            var emptyPath = (IPath)Factory.CreateObject<Path>();
 
             var incompleteLine = (ILine) Factory.CreateObject<Line>();
             incompleteLine.FromPoint = fromPoint;
-            var incompletePath1 = (IPath) Factory.CreateObject<Path>();
-            ((ISegmentCollection) incompletePath1).AddSegment((ISegment) incompleteLine);
+            var incompletePath = (IPath) Factory.CreateObject<Path>();
+            ((ISegmentCollection) incompletePath).AddSegment((ISegment) incompleteLine);
 
             // Add some incomplete lines.
             polyline.SetEmpty();
             var pathCol = (IGeometryCollection) polyline;
-            pathCol.AddGeometry(incompletePath0);
-            pathCol.AddGeometry(incompletePath1);
+            pathCol.AddGeometry(emptyPath);
+            pathCol.AddGeometry(incompletePath);
 
             // Add a complete line.
             var completePath = (IPath) Factory.CreateObject<Path>();
@@ -86,8 +85,8 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
             pathCol.AddGeometry(completePath);
 
             // Add some more incomplete lines.
-            pathCol.AddGeometry((IGeometry)((IClone)incompletePath0).Clone());
-            pathCol.AddGeometry((IGeometry)((IClone)incompletePath1).Clone());
+            pathCol.AddGeometry((IGeometry)((IClone)emptyPath).Clone());
+            pathCol.AddGeometry((IGeometry)((IClone)incompletePath).Clone());
 
             var actual = JsonConvert.SerializeObject(polyline, Formatting.Indented, sut);
             var expected = $@"{{

@@ -44,6 +44,7 @@ Point (without coords) | null
 Polyline (incomplete path, ie: single point) | Point (Simplify=false) or null (Simplify=true)
 Polyline (single path) | LineString
 Polyline (many paths) | MultiLineString
+Polyline (many incomplete paths) | MultiPoint (Simplify=false) or null (Simplify=true)
 Polyline (path + incomplete path (single point) | LineString (incomplete path removed)
 Polyline (many paths + incomplete path, ie: single point) | MultiLineString (incomplete path removed)
 

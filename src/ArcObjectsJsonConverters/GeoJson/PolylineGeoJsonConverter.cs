@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using ESRI.ArcGIS.esriSystem;
 using ESRI.ArcGIS.Geometry;
 using Newtonsoft.Json;
@@ -35,8 +36,26 @@ namespace ArcObjectConverters.GeoJson
             }
 
             var collection = (IGeometryCollection) geometry;
+            var paths = new List<IPointCollection>(collection.GeometryCount);
+            var points = new List<IPoint>();
 
-            if (collection.GeometryCount > 1)
+            for (int i = 0, n = collection.GeometryCount; i < n; i++)
+            {
+                var path = (IPath) collection.Geometry[i];
+                var pathPoints = (IPointCollection) path;
+
+                // Skip incomplete path (a single point) or zero-length segments.
+                if (pathPoints.PointCount > 1 && path.Length > _serializerSettings.Tolerance)
+                {
+                    paths.Add(pathPoints);
+                }
+                else if (pathPoints.PointCount > 0)
+                {
+                    points.Add(pathPoints.Point[0]);
+                }
+            }
+
+            if (paths.Count > 1)
             {
                 writer.WriteStartObject();
                 writer.WritePropertyName("type");
@@ -45,33 +64,31 @@ namespace ArcObjectConverters.GeoJson
                 writer.WritePropertyName("coordinates");
                 writer.WriteStartArray();
 
-                for (int i = 0, n = collection.GeometryCount; i < n; i++)
+                foreach (var path in paths)
                 {
-                    var points = (IPointCollection) collection.Geometry[i];
-
-                    // Skip incomplete path (a single point)
-                    if (points.PointCount > 1)
-                    {
-                        WriteLineStringCoordinatesArray(writer, points, serializer);
-                    }
+                    WriteLineStringCoordinatesArray(writer, path, serializer);
                 }
 
                 writer.WriteEndArray();
                 writer.WriteEndObject();
             }
+            else if (paths.Count == 1)
+            {
+                WriteLineStringObject(writer, paths[0], serializer);
+            }
+            else if (points.Count > 1)
+            {
+                // TODO: Multipoints.
+                throw new NotImplementedException();
+            }
+            else if (points.Count == 1)
+            {
+                // Incomplete path (it's a single point)
+                WritePointObject(writer, points[0], serializer);
+            }
             else
             {
-                var points = (IPointCollection) geometry;
-
-                if (points.PointCount == 1)
-                {
-                    // Incomplete path (it's a single point)
-                    WritePointObject(writer, points.Point[0], serializer);
-                }
-                else
-                {
-                    WriteLineStringObject(writer, points, serializer);
-                }
+                writer.WriteNull();
             }
         }
 
