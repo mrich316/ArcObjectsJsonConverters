@@ -42,6 +42,9 @@ complain by throwing an exception.
 ----------------------------|-------------------------
 `Point`                     | `Point`
 `Point` (without coords)    | `null`
+`Multipoint` | `MultiPoint`
+`Multipoint` (without coords)    | `null`
+`Multipoint` (with copies of the same point) | `MultiPoint` (`Simplify=false`) or `Point` (`Simplify=true`)
 `Polyline` (incomplete path, ie: single point) | `Point` (`Simplify=false`) or `null` (`Simplify=true`)
 `Polyline` (single path) | `LineString`
 `Polyline` (many paths) | `MultiLineString`
@@ -54,9 +57,9 @@ complain by throwing an exception.
 |Geometry    |Serialization|Deserialization|Notes|
 -------------|------|------|---
 `Point`      | done | todo |
-`Polyline`   | done | todo | Needs more tests. Polyline to MultiPoint not implemented.
+`Polyline`   | done | todo | Needs more tests. When true curves are present, the geometry is always generalized, even with `Simplify=false`. This will eventually be ajusted to only generalized the curved paths.
 `Polygon`    | todo | todo |
-`MultiPoint` | todo | todo |
+`MultiPoint` | done | todo |
 
 A [nuget](https://nuget.org/) could be made when a geometry will support
 serialization and deserialization.
