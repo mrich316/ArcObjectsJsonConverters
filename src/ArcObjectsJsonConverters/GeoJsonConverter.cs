@@ -16,7 +16,9 @@ namespace ArcObjectConverters
             typeof(PointClass),
             typeof(IPoint),
             typeof(IPolyline),
-            typeof(PolylineClass)
+            typeof(PolylineClass),
+            typeof(IMultipoint),
+            typeof(MultipointClass)
         };
 
         public GeoJsonConverter()
@@ -46,8 +48,13 @@ namespace ArcObjectConverters
                     break;
 
                 case esriGeometryType.esriGeometryPolyline:
-                    var polyline = PrepareGeometry((IPolyline) value);
+                    var polyline = (IPolyline) PrepareGeometry((IPolycurve) value);
                     WriteMultiLineStringObject(writer, polyline, serializer);
+                    break;
+
+                case esriGeometryType.esriGeometryMultipoint:
+                    var multipoint = (IMultipoint) PrepareGeometry((IMultipoint) value);
+                    WriteMultiPointObject(writer, multipoint, serializer);
                     break;
 
                 default:
@@ -73,7 +80,7 @@ namespace ArcObjectConverters
         /// increasing performance, if <c>false</c>, no side effects will happen, at a cost of lower
         /// performance.
         /// </summary>
-        protected virtual IPolyline PrepareGeometry(IPolyline value)
+        protected virtual IGeometry PrepareGeometry(IPolycurve value)
         {
             if (value == null) return null;
 
@@ -81,7 +88,7 @@ namespace ArcObjectConverters
             ((ISegmentCollection)value).HasNonLinearSegments(ref hasNonLinearSegments);
 
             var geometry = !_serializerSettings.SerializerHasSideEffects && _serializerSettings.Simplify && hasNonLinearSegments
-                ? (IPolyline)((IClone)value).Clone()
+                ? (IPolycurve)((IClone)value).Clone()
                 : value;
 
             if (_serializerSettings.Simplify)
@@ -98,6 +105,24 @@ namespace ArcObjectConverters
                 // We should do this, because Generalize will return only a subset of points if they
                 // fit in the tolerance given (no matter if it's a line segment or a curve).
                 geometry.Generalize(_serializerSettings.Tolerance);
+            }
+
+            return geometry;
+        }
+
+        protected virtual IGeometry PrepareGeometry(IMultipoint value)
+        {
+            if (value == null) return null;
+
+            var geometry = !_serializerSettings.SerializerHasSideEffects && _serializerSettings.Simplify
+                ? (IMultipoint)((IClone)value).Clone()
+                : value;
+
+            if (_serializerSettings.Simplify)
+            {
+                var topo = (ITopologicalOperator2)geometry;
+                topo.IsKnownSimple_2 = false;
+                topo.Simplify();
             }
 
             return geometry;

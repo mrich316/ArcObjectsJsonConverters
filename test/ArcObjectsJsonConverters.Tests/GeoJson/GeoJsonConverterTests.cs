@@ -8,7 +8,7 @@ using Xunit;
 
 namespace ArcObjectJsonConverters.Tests.GeoJson
 {
-    public class BaseGeoJsonConverterTests
+    public class GeoJsonConverterTests
     {
         private static readonly IArcObjectFactory Factory = new ClientArcObjectFactory();
 
@@ -72,7 +72,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
 
             public IPolyline TestPrepareGeometry(IPolyline value)
             {
-                return PrepareGeometry(value);
+                return (IPolyline) PrepareGeometry(value);
             }
 
             public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)

@@ -42,6 +42,11 @@ namespace ArcObjectJsonConverters.Tests
                 .Without(w => w.SpatialReference)
                 .Do(g => g.SpatialReference = _defaultSpatialReference));
 
+            fixture.Customize<IMultipoint>(x => x
+                .FromFactory(() => _factory.CreateObject<Multipoint>() as IMultipoint)
+                .Without(w => w.SpatialReference)
+                .Do(g => g.SpatialReference = _defaultSpatialReference));
+
             fixture.Customize<IBezierCurve>(x => x
                 .FromFactory(() =>
                 {

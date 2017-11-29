@@ -102,7 +102,9 @@
   <ItemGroup>
     <Compile Include="ArcObjectsConventions.cs" />
     <Compile Include="ArcObjectsCustomizations.cs" />
-    <Compile Include="GeoJson\BaseGeoJsonConverterTests.cs" />
+    <Compile Include="GeoJson\GeoJsonConverterTests.cs" />
+    <Compile Include="GeoJson\MultipointClassToMultiPointTests.cs" />
+    <Compile Include="GeoJson\MultipointClassToPointTests.cs" />
     <Compile Include="GeoJson\PolylineClassToMultiLineStringTests.cs" />
     <Compile Include="GeoJson\PolylineClassToMultiPointTests.cs" />
     <Compile Include="GeoJson\PolylineClassToPointTests.cs" />

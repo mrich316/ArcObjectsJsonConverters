@@ -148,6 +148,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
 
         public class SimplifyTrue
         {
+            // TODO: The orientation of the polyline sometime changes. Investigate why.
             [ArcObjectsTheory, ArcObjectsConventions(32188)]
             public void NonTouchingPathsReturnsMultiLineString(GeoJsonSerializerSettings serializerSettings, ILine line, ILine otherLine, ISpatialReference spatialReference)
             {
