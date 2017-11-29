@@ -135,6 +135,50 @@ namespace ArcObjectConverters
             writer.WriteEndObject();
         }
 
+        protected void WriteMultiPointObject(JsonWriter writer, IMultipoint multiPoint, JsonSerializer serializer)
+        {
+            var pointCollection = (IPointCollection)multiPoint;
+            var points = new List<IPoint>(pointCollection.PointCount);
+            for (int i = 0, n = pointCollection.PointCount; i < n; i++)
+            {
+                var point = pointCollection.Point[i];
+                if (point.IsEmpty) continue;
+
+                points.Add(point);
+            }
+
+            WriteMultiPointObject(writer, points, serializer);
+        }
+
+        protected void WriteMultiPointObject(JsonWriter writer, List<IPoint> points, JsonSerializer serializer)
+        {
+            if (points.Count > 1)
+            {
+                writer.WriteStartObject();
+
+                writer.WritePropertyName("type");
+                writer.WriteValue("MultiPoint");
+
+                writer.WritePropertyName("coordinates");
+                writer.WriteStartArray();
+                foreach (var point in points)
+                {
+                    WritePositionArray(writer, point, serializer);
+                }
+                writer.WriteEndArray();
+
+                writer.WriteEndObject();
+            }
+            else if (points.Count == 1)
+            {
+                WritePointObject(writer, points[0], serializer);
+            }
+            else
+            {
+                writer.WriteNull();
+            }
+        }
+
         protected void WriteLineStringCoordinatesArray(JsonWriter writer, IPointCollection lineString, JsonSerializer serializer)
         {
             writer.WriteStartArray();
@@ -176,9 +220,19 @@ namespace ArcObjectConverters
                 {
                     paths.Add(pathPoints);
                 }
+                // It could have two points, but at a distance lower than {_serializerSettings.Tolerance},
+                // so we check > 0.
                 else if (pathPoints.PointCount > 0)
                 {
-                    points.Add(pathPoints.Point[0]);
+                    for (int j = 0, m = pathPoints.PointCount; j < m; j++)
+                    {
+                        // Take the first non-empty point.
+                        var point = pathPoints.Point[j];
+                        if (point.IsEmpty) continue;
+
+                        points.Add(point);
+                        break;
+                    }
                 }
             }
 
@@ -205,8 +259,7 @@ namespace ArcObjectConverters
             }
             else if (points.Count > 1)
             {
-                // TODO: Multipoints.
-                throw new NotImplementedException();
+                WriteMultiPointObject(writer, points, serializer);
             }
             else if (points.Count == 1)
             {
