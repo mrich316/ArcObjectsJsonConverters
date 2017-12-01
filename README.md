@@ -56,7 +56,7 @@ complain by throwing an exception.
 
 |Geometry    |Serialization|Deserialization|Notes|
 -------------|------|------|---
-`Point`      | done | partial | It is missing deserialization to incomplete Multipoint, Polyline and Polygon when `Simplify=false`. Currently throws when `Simplify=true` and target type is not a point, but will soon deserialize to `null` when fully implemented.
+`Point`      | done | partial | It is missing deserialization to incomplete Polyline and Polygon (throws exception). When implemented, they will return incomplete polylines/polygons if `Simplify=false`, null otherwise.
 `Polyline`   | done | todo | Needs more tests. When true curves are present, the geometry is always generalized, even with `Simplify=false`. This will eventually be ajusted to only generalize the curved segments.
 `Polygon`    | todo | todo |
 `MultiPoint` | done | todo |

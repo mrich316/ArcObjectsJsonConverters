@@ -67,7 +67,7 @@ namespace ArcObjectConverters
             var type = json["type"];
             if (type == null || type.Type != JTokenType.String)
             {
-                ThrowJsonReaderException( type ?? json,
+                throw CreateJsonReaderException( type ?? json,
                     "GeoJSON property \"type\" is not found or its content is not a string.");
             }
 
@@ -79,17 +79,13 @@ namespace ArcObjectConverters
             }
             else if (coordinates.Type != JTokenType.Array)
             {
-                ThrowJsonReaderException(coordinates, "GeoJSON property \"coordinates\" is not an array.");
+                throw CreateJsonReaderException(coordinates, "GeoJSON property \"coordinates\" is not an array.");
             }
 
             switch (type.Value<string>())
             {
                 case "Point":
-                    if (objectType.IsAssignableFrom(typeof(PointClass)))
-                    {
-                        return ReadPositionArray((JArray) coordinates, (IPoint)existingValue, serializer);
-                    }
-                    break;
+                    return ReadJsonPoint(coordinates, objectType, existingValue, serializer);
 
                 case "LineString":
                 case "MultiLineString":
@@ -97,8 +93,6 @@ namespace ArcObjectConverters
                 default:
                     throw new JsonSerializationException($"GeoJSON object of type \"{type}\" is not supported by this implementation.");
             }
-
-            throw new JsonSerializationException($"GeoJSON object of type \"{type}\" cannot be deserialized to \"{objectType.FullName}\".");
         }
 
         public override bool CanConvert(Type objectType)
@@ -174,6 +168,27 @@ namespace ArcObjectConverters
             return geometry;
         }
 
+        protected object ReadJsonPoint(JToken coordinates, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            if (objectType.IsAssignableFrom(typeof(PointClass)))
+            {
+                return ReadPositionArray((JArray)coordinates, (IPoint)existingValue, serializer);
+            }
+
+            if (objectType.IsAssignableFrom(typeof(MultipointClass)))
+            {
+                var multiPoint = (IPointCollection)existingValue ?? new MultipointClass();
+                var point = ReadPositionArray((JArray)coordinates, null, serializer);
+                multiPoint.AddPoint(point);
+
+                return multiPoint;
+            }
+
+            throw CreateJsonReaderException(
+                coordinates.Parent,
+                $"GeoJSON object of type \"Point\" cannot be deserialized to \"{objectType.FullName}\".");
+        }
+
         protected IPoint ReadPositionArray(JArray coordinates, IPoint existingPoint, JsonSerializer serializer)
         {
             var point = existingPoint ?? new PointClass();
@@ -185,7 +200,7 @@ namespace ArcObjectConverters
 
             if (coordinates.Count < 2)
             {
-                ThrowJsonReaderException(coordinates,
+                throw CreateJsonReaderException(coordinates,
                     "GeoJSON coordinates must contain at least two positions for a Point.");
             }
 
@@ -195,7 +210,7 @@ namespace ArcObjectConverters
             }
             catch (Exception pointException)
             {
-                ThrowJsonReaderException(coordinates[0], "Longitude (or Easting) could not be read.", pointException);
+                throw CreateJsonReaderException(coordinates[0], "Longitude (or Easting) could not be read.", pointException);
             }
 
             try
@@ -204,7 +219,7 @@ namespace ArcObjectConverters
             }
             catch (Exception pointException)
             {
-                ThrowJsonReaderException(coordinates[1], "Latitude (or Northing) could not be read.", pointException);
+                throw CreateJsonReaderException(coordinates[1], "Latitude (or Northing) could not be read.", pointException);
             }
 
             // TODO: Handle other dimensions: ie: M.
@@ -217,7 +232,7 @@ namespace ArcObjectConverters
                 }
                 catch (Exception pointException)
                 {
-                    ThrowJsonReaderException(coordinates[2], "Altitude could not be read.", pointException);
+                    throw CreateJsonReaderException(coordinates[2], "Altitude could not be read.", pointException);
                 }
 
                 ((IZAware) point).ZAware = true;
@@ -400,7 +415,7 @@ namespace ArcObjectConverters
             }
         }
 
-        protected virtual void ThrowJsonReaderException(JToken token, string message, Exception innerException = null)
+        protected virtual JsonException CreateJsonReaderException(JToken token, string message, Exception innerException = null)
         {
             var lineInfo = (IJsonLineInfo) token;
 
@@ -408,7 +423,7 @@ namespace ArcObjectConverters
                 ? new JsonReaderException(message, innerException)
                 : new JsonReaderException(message, token.Path, lineInfo.LineNumber, lineInfo.LinePosition, innerException);
 
-            throw exception;
+            return exception;
         }
     }
 }

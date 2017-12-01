@@ -7,7 +7,7 @@ using Xunit;
 
 namespace ArcObjectJsonConverters.Tests.GeoJsonToArcObjects
 {
-    public class PointToPointTests
+    public class PointToPointClassTests
     {
         [ArcObjectsTheory]
         [ArcObjectsConventions(32188, typeof(IPoint))]
