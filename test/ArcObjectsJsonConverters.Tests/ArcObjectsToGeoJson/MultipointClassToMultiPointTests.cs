@@ -3,12 +3,12 @@ using ESRI.ArcGIS.Geometry;
 using Newtonsoft.Json;
 using VL.ArcObjectsApi.Xunit2;
 
-namespace ArcObjectJsonConverters.Tests.GeoJson
+namespace ArcObjectJsonConverters.Tests.ArcObjectsToGeoJson
 {
     public class MultipointClassToMultiPointTests
     {
         [ArcObjectsTheory, ArcObjectsConventions(32188)]
-        public void EmptyPointsAreRemoved(GeoJsonConverter sut, IMultipoint multiPoint, IPoint point1, IPoint point2, IPoint emptyPoint)
+        public void EmptyPointsAreRemoved(GeometryGeoJsonConverter sut, IMultipoint multiPoint, IPoint point1, IPoint point2, IPoint emptyPoint)
         {
             emptyPoint.SetEmpty();
             multiPoint.SetEmpty();

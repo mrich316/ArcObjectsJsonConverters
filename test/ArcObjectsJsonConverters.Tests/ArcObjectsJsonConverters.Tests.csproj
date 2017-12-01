@@ -102,16 +102,17 @@
   <ItemGroup>
     <Compile Include="ArcObjectsConventions.cs" />
     <Compile Include="ArcObjectsCustomizations.cs" />
-    <Compile Include="GeoJson\GeoJsonConverterTests.cs" />
-    <Compile Include="GeoJson\MultipointClassToMultiPointTests.cs" />
-    <Compile Include="GeoJson\MultipointClassToPointTests.cs" />
-    <Compile Include="GeoJson\PolylineClassToMultiLineStringTests.cs" />
-    <Compile Include="GeoJson\PolylineClassToMultiPointTests.cs" />
-    <Compile Include="GeoJson\PolylineClassToPointTests.cs" />
+    <Compile Include="ArcObjectsToGeoJson\GeometryGeoJsonConverterTests.cs" />
+    <Compile Include="ArcObjectsToGeoJson\MultipointClassToMultiPointTests.cs" />
+    <Compile Include="ArcObjectsToGeoJson\MultipointClassToPointTests.cs" />
+    <Compile Include="ArcObjectsToGeoJson\PolylineClassToMultiLineStringTests.cs" />
+    <Compile Include="ArcObjectsToGeoJson\PolylineClassToMultiPointTests.cs" />
+    <Compile Include="ArcObjectsToGeoJson\PolylineClassToPointTests.cs" />
+    <Compile Include="GeoJsonToArcObjects\PointToPointTests.cs" />
     <Compile Include="JsonAssert.cs" />
-    <Compile Include="GeoJson\DoubleExtensions.cs" />
-    <Compile Include="GeoJson\PointClassToPointTests.cs" />
-    <Compile Include="GeoJson\PolylineClassToLineStringTests.cs" />
+    <Compile Include="DoubleExtensions.cs" />
+    <Compile Include="ArcObjectsToGeoJson\PointClassToPointTests.cs" />
+    <Compile Include="ArcObjectsToGeoJson\PolylineClassToLineStringTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

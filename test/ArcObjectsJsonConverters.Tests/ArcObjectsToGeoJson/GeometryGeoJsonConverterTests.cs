@@ -6,16 +6,16 @@ using VL.ArcObjectsApi;
 using VL.ArcObjectsApi.Xunit2;
 using Xunit;
 
-namespace ArcObjectJsonConverters.Tests.GeoJson
+namespace ArcObjectJsonConverters.Tests.ArcObjectsToGeoJson
 {
-    public class GeoJsonConverterTests
+    public class GeometryGeoJsonConverterTests
     {
         private static readonly IArcObjectFactory Factory = new ClientArcObjectFactory();
 
         [ArcObjectsFact]
         public void CtorThrowsOnNull()
         {
-            Assert.Throws<ArgumentNullException>("serializerSettings", () => new TestGeoJsonConverter(null));
+            Assert.Throws<ArgumentNullException>("serializerSettings", () => new TestGeometryGeoJsonConverter(null));
         }
 
         public class PrepareGeometry
@@ -31,7 +31,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
                 path2.AddSegment((ISegment) curve);
                 ((IGeometryCollection) expected).AddGeometry((IGeometry) path2);
 
-                var sut = new TestGeoJsonConverter(new GeoJsonSerializerSettings
+                var sut = new TestGeometryGeoJsonConverter(new GeoJsonSerializerSettings
                 {
                     SerializerHasSideEffects = false,
                     Simplify = true
@@ -52,7 +52,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
                 path2.AddSegment((ISegment)curve);
                 ((IGeometryCollection)expected).AddGeometry((IGeometry)path2);
 
-                var sut = new TestGeoJsonConverter(new GeoJsonSerializerSettings
+                var sut = new TestGeometryGeoJsonConverter(new GeoJsonSerializerSettings
                 {
                     SerializerHasSideEffects = true,
                     Simplify = true
@@ -63,9 +63,9 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
             }
         }
 
-        private class TestGeoJsonConverter : GeoJsonConverter
+        private class TestGeometryGeoJsonConverter : GeometryGeoJsonConverter
         {
-            public TestGeoJsonConverter(GeoJsonSerializerSettings serializerSettings)
+            public TestGeometryGeoJsonConverter(GeoJsonSerializerSettings serializerSettings)
                 : base(serializerSettings)
             {
             }

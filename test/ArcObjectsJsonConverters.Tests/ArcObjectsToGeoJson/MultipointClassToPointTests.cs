@@ -5,14 +5,14 @@ using VL.ArcObjectsApi;
 using VL.ArcObjectsApi.Xunit2;
 using Xunit;
 
-namespace ArcObjectJsonConverters.Tests.GeoJson
+namespace ArcObjectJsonConverters.Tests.ArcObjectsToGeoJson
 {
     public class MultipointClassToPointTests
     {
         private readonly IArcObjectFactory _factory = new ClientArcObjectFactory();
 
         [ArcObjectsTheory, ArcObjectsConventions(32188)]
-        public void NullReturnsNull(GeoJsonConverter sut)
+        public void NullReturnsNull(GeometryGeoJsonConverter sut)
         {
             var actual = JsonConvert.SerializeObject((MultipointClass)null, sut);
 
@@ -20,7 +20,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
         }
 
         [ArcObjectsTheory, ArcObjectsConventions(32188)]
-        public void EmptyReturnsNull(IMultipoint multiPoint, GeoJsonConverter sut)
+        public void EmptyReturnsNull(IMultipoint multiPoint, GeometryGeoJsonConverter sut)
         {
             multiPoint.SetEmpty();
 
@@ -30,7 +30,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
         }
 
         [ArcObjectsTheory, ArcObjectsConventions(32188)]
-        public void SinglePointReturnsPoint(GeoJsonConverter sut, IMultipoint multiPoint, IPoint point)
+        public void SinglePointReturnsPoint(GeometryGeoJsonConverter sut, IMultipoint multiPoint, IPoint point)
         {
             multiPoint.SetEmpty();
             ((IPointCollection)multiPoint).AddPoint(point);
@@ -51,7 +51,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
         {
             emptyPoint.SetEmpty();
             serializerSettings.Simplify = true;
-            var sut = new GeoJsonConverter(serializerSettings);
+            var sut = new GeometryGeoJsonConverter(serializerSettings);
 
             multiPoint.SetEmpty();
             ((IPointCollection)multiPoint).AddPoint(emptyPoint);
@@ -75,7 +75,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
             public void MultiSamePointReturnsUniquePoint(GeoJsonSerializerSettings serializerSettings, IMultipoint multiPoint, IPoint point)
             {
                 serializerSettings.Simplify = true;
-                var sut = new GeoJsonConverter(serializerSettings);
+                var sut = new GeometryGeoJsonConverter(serializerSettings);
 
                 multiPoint.SetEmpty();
                 ((IPointCollection)multiPoint).AddPoint(point);

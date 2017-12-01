@@ -5,14 +5,14 @@ using Newtonsoft.Json;
 using VL.ArcObjectsApi;
 using VL.ArcObjectsApi.Xunit2;
 
-namespace ArcObjectJsonConverters.Tests.GeoJson
+namespace ArcObjectJsonConverters.Tests.ArcObjectsToGeoJson
 {
     public class PolylineClassToMultiPointTests
     {
         private readonly IArcObjectFactory _factory = new ClientArcObjectFactory();
 
         [ArcObjectsTheory, ArcObjectsConventions(32188)]
-        public void ManySinglePointsReturnsMultiPoint(GeoJsonConverter sut, IPolyline polyline, IPoint[] points)
+        public void ManySinglePointsReturnsMultiPoint(GeometryGeoJsonConverter sut, IPolyline polyline, IPoint[] points)
         {
             polyline.SetEmpty();
 

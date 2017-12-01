@@ -3,30 +3,27 @@ using System.Collections.Generic;
 using ESRI.ArcGIS.esriSystem;
 using ESRI.ArcGIS.Geometry;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace ArcObjectConverters
 {
-    public class GeoJsonConverter : JsonConverter
+    public class GeometryGeoJsonConverter : JsonConverter
     {
         private readonly GeoJsonSerializerSettings _serializerSettings;
+        private static readonly JArray EmptyArray = new JArray();
 
-        private static readonly List<Type> SupportedTypes = new List<Type>
+        private readonly JsonLoadSettings _loadSettings = new JsonLoadSettings
         {
-            typeof(IGeometry),
-            typeof(PointClass),
-            typeof(IPoint),
-            typeof(IPolyline),
-            typeof(PolylineClass),
-            typeof(IMultipoint),
-            typeof(MultipointClass)
+            CommentHandling = CommentHandling.Ignore,
+            LineInfoHandling = LineInfoHandling.Load
         };
 
-        public GeoJsonConverter()
+        public GeometryGeoJsonConverter()
             : this(new GeoJsonSerializerSettings())
         {
         }
 
-        public GeoJsonConverter(GeoJsonSerializerSettings serializerSettings)
+        public GeometryGeoJsonConverter(GeoJsonSerializerSettings serializerSettings)
         {
             if (serializerSettings == null) throw new ArgumentNullException(nameof(serializerSettings));
             _serializerSettings = serializerSettings;
@@ -58,19 +55,59 @@ namespace ArcObjectConverters
                     break;
 
                 default:
-                    throw new NotImplementedException($"{geometry.GeometryType} is not implemented.");
+                    throw new JsonSerializationException($"{geometry.GeometryType} not supported by this implementation.");
             }
         }
 
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
-            throw new NotImplementedException();
+            var json = JObject.Load(reader, _loadSettings);
+
+            // Type is mandatory.
+            var type = json["type"];
+            if (type == null || type.Type != JTokenType.String)
+            {
+                ThrowJsonReaderException( type ?? json,
+                    "GeoJSON property \"type\" is not found or its content is not a string.");
+            }
+
+            // Empty or missing coordinates is tolerated.
+            var coordinates = json["coordinates"];
+            if (coordinates == null || coordinates.Type == JTokenType.Null)
+            {
+                coordinates = EmptyArray;
+            }
+            else if (coordinates.Type != JTokenType.Array)
+            {
+                ThrowJsonReaderException(coordinates, "GeoJSON property \"coordinates\" is not an array.");
+            }
+
+            switch (type.Value<string>())
+            {
+                case "Point":
+                    if (objectType.IsAssignableFrom(typeof(PointClass)))
+                    {
+                        return ReadPositionArray((JArray) coordinates, (IPoint)existingValue, serializer);
+                    }
+                    break;
+
+                case "LineString":
+                case "MultiLineString":
+                case "MultiPoint":
+                default:
+                    throw new JsonSerializationException($"GeoJSON object of type \"{type}\" is not supported by this implementation.");
+            }
+
+            throw new JsonSerializationException($"GeoJSON object of type \"{type}\" cannot be deserialized to \"{objectType.FullName}\".");
         }
 
         public override bool CanConvert(Type objectType)
         {
-            return SupportedTypes.Contains(objectType);
+            return objectType.IsAssignableFrom(typeof(PointClass))
+                   || objectType.IsAssignableFrom(typeof(PolylineClass))
+                   || objectType.IsAssignableFrom(typeof(MultipointClass));
         }
+
         /// <summary>
         /// Prepare the geometry (or a copy of itself) to be serialized. Depending on <see cref="GeoJsonSerializerSettings"/>,
         /// the geometry might be altered, cloned and generalized by this function.
@@ -110,6 +147,15 @@ namespace ArcObjectConverters
             return geometry;
         }
 
+        /// <summary>
+        /// Prepare the geometry (or a copy of itself) to be serialized. Depending on <see cref="GeoJsonSerializerSettings"/>,
+        /// the geometry might be altered, cloned and generalized by this function.
+        ///  
+        /// <see cref="IGeometry"/> operations like <see cref="IGeometry.Project(ISpatialReference)"/> can
+        /// have side effets (altering the input object). If <c>true</c>, geometries will not be cloned,
+        /// increasing performance, if <c>false</c>, no side effects will happen, at a cost of lower
+        /// performance.
+        /// </summary>
         protected virtual IGeometry PrepareGeometry(IMultipoint value)
         {
             if (value == null) return null;
@@ -126,6 +172,63 @@ namespace ArcObjectConverters
             }
 
             return geometry;
+        }
+
+        protected IPoint ReadPositionArray(JArray coordinates, IPoint existingPoint, JsonSerializer serializer)
+        {
+            var point = existingPoint ?? new PointClass();
+
+            if (coordinates.Count == 0)
+            {
+                return point;
+            }
+
+            if (coordinates.Count < 2)
+            {
+                ThrowJsonReaderException(coordinates,
+                    "GeoJSON coordinates must contain at least two positions for a Point.");
+            }
+
+            try
+            {
+                point.X = coordinates[0].Value<double>();
+            }
+            catch (Exception pointException)
+            {
+                ThrowJsonReaderException(coordinates[0], "Longitude (or Easting) could not be read.", pointException);
+            }
+
+            try
+            {
+                point.Y = coordinates[1].Value<double>();
+            }
+            catch (Exception pointException)
+            {
+                ThrowJsonReaderException(coordinates[1], "Latitude (or Northing) could not be read.", pointException);
+            }
+
+            // TODO: Handle other dimensions: ie: M.
+
+            if (coordinates.Count > 2)
+            {
+                try
+                {
+                    point.Z = coordinates[2].Value<double>();
+                }
+                catch (Exception pointException)
+                {
+                    ThrowJsonReaderException(coordinates[2], "Altitude could not be read.", pointException);
+                }
+
+                ((IZAware) point).ZAware = true;
+            }
+            else if (_serializerSettings.Dimensions == DimensionHandling.XYZ)
+            {
+                point.Z = _serializerSettings.DefaultZValue;
+                ((IZAware)point).ZAware = true;
+            }
+
+            return point;
         }
 
         protected void WritePositionArray(JsonWriter writer, IPoint value, JsonSerializer serializer)
@@ -295,6 +398,17 @@ namespace ArcObjectConverters
             {
                 writer.WriteNull();
             }
+        }
+
+        protected virtual void ThrowJsonReaderException(JToken token, string message, Exception innerException = null)
+        {
+            var lineInfo = (IJsonLineInfo) token;
+
+            var exception = lineInfo == null || !lineInfo.HasLineInfo()
+                ? new JsonReaderException(message, innerException)
+                : new JsonReaderException(message, token.Path, lineInfo.LineNumber, lineInfo.LinePosition, innerException);
+
+            throw exception;
         }
     }
 }

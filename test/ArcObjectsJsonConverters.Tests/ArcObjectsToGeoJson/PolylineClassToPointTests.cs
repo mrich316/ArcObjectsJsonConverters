@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 using VL.ArcObjectsApi;
 using VL.ArcObjectsApi.Xunit2;
 
-namespace ArcObjectJsonConverters.Tests.GeoJson
+namespace ArcObjectJsonConverters.Tests.ArcObjectsToGeoJson
 {
     public class PolylineClassToPointTests
     {
@@ -18,7 +18,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJson
             var polylineWithoutToPoint = (IPolyline) _factory.CreateObject<Polyline>();
             polylineWithoutToPoint.FromPoint = point;
 
-            var sut = new GeoJsonConverter(serializerSettings);
+            var sut = new GeometryGeoJsonConverter(serializerSettings);
             var actual = JsonConvert.SerializeObject(polylineWithoutToPoint, Formatting.Indented, sut);
             var expected = $@"{{
   ""type"": ""Point"",

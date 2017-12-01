@@ -54,7 +54,7 @@
   <ItemGroup>
     <Compile Include="DimensionHandling.cs" />
     <Compile Include="GeoJsonSerializerSettings.cs" />
-    <Compile Include="GeoJsonConverter.cs" />
+    <Compile Include="GeometryGeoJsonConverter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
