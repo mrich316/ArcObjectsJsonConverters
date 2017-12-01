@@ -113,13 +113,26 @@ namespace ArcObjectJsonConverters.Tests.GeoJsonToArcObjects
         [ArcObjectsTheory]
         [ArcObjectsConventions(32188, "{\"type\": \"Point\", \"coordinates\": [\"a\", false]}")]
         [ArcObjectsConventions(32188, "{\"type\": \"Point\", \"coordinates\": [123]}")]
-        [ArcObjectsConventions(32188, "{\"type\": \"Point\", \"coordinates\": [123, false]}")]
         [ArcObjectsConventions(32188, "{\"type\": \"Point\", \"coordinates\": [123, \"a\"]}")]
         [ArcObjectsConventions(32188, "{\"type\": \"Point\", \"coordinates\": [123, 123, \"a\"]}")]
         [ArcObjectsConventions(32188, "{\"type\": \"Point\", \"coordinates\": [\"a\", 123]}")]
         public void InvalidCoordinatesValueThrows(string geoJson, GeometryGeoJsonConverter sut)
         {
             Assert.Throws<JsonReaderException>(() => JsonConvert.DeserializeObject<IPoint>(geoJson, sut));
+        }
+
+        [ArcObjectsTheory]
+        [ArcObjectsConventions(32188, "{\"type\": \"Point\", \"coordinates\": [true, false]}")]
+        public void BooleanCoordinatesValueReturns(string geoJson, GeometryGeoJsonConverter sut)
+        {
+            // Not sure what to do with boolean values.
+            // --
+            // The test is only there to document the current behavior.
+            // If it breaks in the futur, we'll think how to manage it, but
+            // it really is a dark and pretty limited edge case.
+            var point = JsonConvert.DeserializeObject<IPoint>(geoJson, sut);
+            Assert.Equal(1, point.X);
+            Assert.Equal(0, point.Y);
         }
     }
 }
