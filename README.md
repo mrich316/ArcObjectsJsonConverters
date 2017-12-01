@@ -36,28 +36,28 @@ Before serializing a geometry to `json`, a converter will (depending on
 At last, if nothing can be done to serialize the geometry, the converter will
 complain by throwing an exception.
 
-## Conversion Table for ArcObjects to GeoJson
+## Conversion Table for ArcObjects Geometries to GeoJson
 
-| Source ArcObject Geometry | Destination GeoJson Type
-----------------------------|-------------------------
-`Point`                     | `Point`
-`Point` (without coords)    | `null`
-`Multipoint` | `MultiPoint`
-`Multipoint` (without coords)    | `null`
-`Multipoint` (with copies of the same point) | `MultiPoint` (`Simplify=false`) or `Point` (`Simplify=true`)
-`Polyline` (incomplete path, ie: single point) | `Point` (`Simplify=false`) or `null` (`Simplify=true`)
-`Polyline` (single path) | `LineString`
-`Polyline` (many paths) | `MultiLineString`
-`Polyline` (many incomplete paths) | `MultiPoint` (`Simplify=false`) or `null` (`Simplify=true`)
-`Polyline` (path + incomplete path (single point) | `LineString` (incomplete path removed)
-`Polyline` (many paths + incomplete path, ie: single point) | `MultiLineString` (incomplete path removed)
+| Source ArcObject Geometry | Destination GeoJson (`Simplify=false`) | Destination GeoJson (`Simplify=true`)
+----------------------------|----------------------------------------|--------------------------------------
+`Point`                     | `Point` | `Point`
+`Point` (without coords)    | `null`  | `null`
+`Multipoint`    | `MultiPoint` | `MultiPoint`
+`Multipoint` (without coords)    | `null` | `null`
+`Multipoint` (with copies of the same point) | `MultiPoint` | `Point`
+`Polyline` (incomplete path, ie: single point) | `Point` | `null`
+`Polyline` (single path) | `LineString` | `LineString`
+`Polyline` (many paths) | `MultiLineString` | `MultiLineString`
+`Polyline` (many incomplete paths) | `MultiPoint` | `null`
+`Polyline` (path + incomplete path (single point) | `LineString` (incomplete path removed) | `LineString` (incomplete path removed)
+`Polyline` (many paths + incomplete path, ie: single point) | `MultiLineString` (incomplete path removed) | `MultiLineString` (incomplete path removed)
 
 ## Status
 
 |Geometry    |Serialization|Deserialization|Notes|
 -------------|------|------|---
-`Point`      | done | todo |
-`Polyline`   | done | todo | Needs more tests. When true curves are present, the geometry is always generalized, even with `Simplify=false`. This will eventually be ajusted to only generalized the curved paths.
+`Point`      | done | partial | It is missing deserialization to incomplete Multipoint, Polyline and Polygon when `Simplify=false`. Currently throws when `Simplify=true` and target type is not a point, but will soon deserialize to `null` when fully implemented.
+`Polyline`   | done | todo | Needs more tests. When true curves are present, the geometry is always generalized, even with `Simplify=false`. This will eventually be ajusted to only generalize the curved segments.
 `Polygon`    | todo | todo |
 `MultiPoint` | done | todo |
 
