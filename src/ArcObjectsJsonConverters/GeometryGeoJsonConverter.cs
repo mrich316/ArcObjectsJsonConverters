@@ -168,25 +168,40 @@ namespace ArcObjectConverters
             return geometry;
         }
 
-        protected object ReadJsonPoint(JToken coordinates, Type objectType, object existingValue, JsonSerializer serializer)
+        protected object ReadJsonPoint(JToken coordinates, Type objectType, object existingValue,
+            JsonSerializer serializer)
         {
             if (objectType.IsAssignableFrom(typeof(PointClass)))
             {
-                return ReadPositionArray((JArray)coordinates, (IPoint)existingValue, serializer);
+                return ReadPositionArray((JArray) coordinates, (IPoint) existingValue, serializer);
             }
+
+            IPointCollection pointCollection = null;
 
             if (objectType.IsAssignableFrom(typeof(MultipointClass)))
             {
-                var multiPoint = (IPointCollection)existingValue ?? new MultipointClass();
-                var point = ReadPositionArray((JArray)coordinates, null, serializer);
-                multiPoint.AddPoint(point);
-
-                return multiPoint;
+                pointCollection = (IPointCollection) existingValue ?? new MultipointClass();
+            }
+            else if (objectType.IsAssignableFrom(typeof(PolylineClass)))
+            {
+                pointCollection = (IPointCollection) existingValue ?? new PolylineClass();
+            }
+            else
+            {
+                throw CreateJsonReaderException(
+                    coordinates.Parent,
+                    $"GeoJSON object of type \"Point\" cannot be deserialized to \"{objectType.FullName}\".");
             }
 
-            throw CreateJsonReaderException(
-                coordinates.Parent,
-                $"GeoJSON object of type \"Point\" cannot be deserialized to \"{objectType.FullName}\".");
+            var point = ReadPositionArray((JArray) coordinates, null, serializer);
+            pointCollection.AddPoint(point);
+
+            if (_serializerSettings.Simplify)
+            {
+                ((ITopologicalOperator) pointCollection).Simplify();
+            }
+
+            return pointCollection;
         }
 
         protected IPoint ReadPositionArray(JArray coordinates, IPoint existingPoint, JsonSerializer serializer)
