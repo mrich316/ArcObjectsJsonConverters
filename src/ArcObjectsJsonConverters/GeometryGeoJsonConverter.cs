@@ -85,9 +85,11 @@ namespace ArcObjectConverters
             switch (type.Value<string>())
             {
                 case "Point":
-                    return ReadJsonPoint(coordinates, objectType, existingValue, serializer);
+                    return ReadPoint((JArray) coordinates, objectType, existingValue, serializer);
 
                 case "LineString":
+                    return ReadLineString((JArray) coordinates, objectType, existingValue, serializer);
+
                 case "MultiLineString":
                 case "MultiPoint":
                 default:
@@ -168,12 +170,40 @@ namespace ArcObjectConverters
             return geometry;
         }
 
-        protected object ReadJsonPoint(JToken coordinates, Type objectType, object existingValue,
+        protected object ReadLineString(JArray coordinates, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            if (objectType.IsAssignableFrom(typeof(PolylineClass)))
+            {
+                return ReadLineStringCoordinatesArray(coordinates, (IPolyline) existingValue, serializer);
+            }
+
+            throw CreateJsonReaderException(
+                coordinates.Parent,
+                $"GeoJSON object of type \"LineString\" cannot be deserialized to \"{objectType.FullName}\".");
+        }
+
+        protected object ReadLineStringCoordinatesArray(JArray coordinates, IPolyline existingValue, JsonSerializer serializer)
+        {
+            var polyline = existingValue ?? new PolylineClass();
+
+            var path = (IPointCollection)new PathClass();
+
+            foreach (var positionArray in coordinates)
+            {
+                var point = ReadPositionArray(coordinates, null, serializer);
+                path.AddPoint(point);
+            }
+
+            ((IGeometryCollection) polyline).AddGeometry((IGeometry) path);
+            return polyline;
+        }
+
+        protected object ReadPoint(JArray coordinates, Type objectType, object existingValue,
             JsonSerializer serializer)
         {
             if (objectType.IsAssignableFrom(typeof(PointClass)))
             {
-                return ReadPositionArray((JArray) coordinates, (IPoint) existingValue, serializer);
+                return ReadPositionArray(coordinates, (IPoint) existingValue, serializer);
             }
 
             IPointCollection pointCollection = null;
