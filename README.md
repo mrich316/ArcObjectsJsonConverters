@@ -21,7 +21,7 @@ its geometry type. More over, `IMultiPoint` can be empty or contain a single poi
 The converters work hard to make the serialization go as smooth and predictable
 as possible and always assume the worst case scenario: a half baked geometry.
 
-Before serializing a geometry to `json`, a converter will (depending on
+Before serializing a geometry to `json`, a converter could (depending on
 `GeoJsonSerializerSettings`):
 - serialize empty geometries as `null`
 - remove paths with less than 2 points
@@ -56,8 +56,8 @@ complain by throwing an exception.
 
 |Geometry    |Serialization|Deserialization|Notes|
 -------------|------|------|---
-`Point`      | done | partial | It is missing deserialization to incomplete Polygon (throws exception). When implemented, it will return incomplete polygons if `Simplify=false`, null otherwise.
-`Polyline`   | done | todo | Needs more tests. When true curves are present, the geometry is always generalized, even with `Simplify=false`. This will eventually be ajusted to only generalize the curved segments.
+`Point`      | done | done
+`Polyline`   | done | todo | When true curves are present, the geometry is always generalized, even with `Simplify=false`. This will eventually be adjusted to only generalize the curved segments.
 `Polygon`    | todo | todo |
 `MultiPoint` | done | todo |
 

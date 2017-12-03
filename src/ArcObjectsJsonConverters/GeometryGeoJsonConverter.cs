@@ -90,7 +90,9 @@ namespace ArcObjectConverters
                 case "LineString":
                     return ReadLineString((JArray) coordinates, objectType, existingValue, serializer);
 
+                case "Polygon":
                 case "MultiLineString":
+                case "MultiPolygon":
                 case "MultiPoint":
                 default:
                     throw new JsonSerializationException($"GeoJSON object of type \"{type}\" is not supported by this implementation.");
@@ -101,6 +103,7 @@ namespace ArcObjectConverters
         {
             return objectType.IsAssignableFrom(typeof(PointClass))
                    || objectType.IsAssignableFrom(typeof(PolylineClass))
+                   || objectType.IsAssignableFrom(typeof(PolygonClass))
                    || objectType.IsAssignableFrom(typeof(MultipointClass));
         }
 
@@ -215,6 +218,10 @@ namespace ArcObjectConverters
             else if (objectType.IsAssignableFrom(typeof(PolylineClass)))
             {
                 pointCollection = (IPointCollection) existingValue ?? new PolylineClass();
+            }
+            else if (objectType.IsAssignableFrom(typeof(PolygonClass)))
+            {
+                pointCollection = (IPointCollection) existingValue ?? new PolygonClass();
             }
             else
             {
