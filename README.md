@@ -57,7 +57,7 @@ complain by throwing an exception.
 |Geometry    |Serialization|Deserialization|Notes|
 -------------|------|------|---
 `Point`      | done | done
-`Polyline`   | done | todo | When true curves are present, the geometry is always generalized, even with `Simplify=false`. This will eventually be adjusted to only generalize the curved segments.
+`Polyline`   | done | partial | When true curves are present, the geometry is always generalized, even with `Simplify=false`. This will eventually be adjusted to only generalize the curved segments.
 `Polygon`    | todo | todo |
 `MultiPoint` | done | todo |
 

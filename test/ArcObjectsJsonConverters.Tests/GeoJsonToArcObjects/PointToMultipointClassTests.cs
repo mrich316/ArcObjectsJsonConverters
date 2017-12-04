@@ -27,6 +27,30 @@ namespace ArcObjectJsonConverters.Tests.GeoJsonToArcObjects
             Assert.Equal(y, actual.Point[0].Y);
         }
 
+        [ArcObjectsTheory]
+        [ArcObjectsConventions(32188, typeof(IMultipoint))]
+        [ArcObjectsConventions(32188, typeof(Multipoint))]
+        [ArcObjectsConventions(32188, typeof(MultipointClass))]
+        public void Point3DReturnsMultipoint3D(Type type, GeoJsonSerializerSettings serializerSettings, double x, double y, double z)
+        {
+            serializerSettings.Dimensions = DimensionHandling.XYZ;
+            var sut = new GeometryGeoJsonConverter(serializerSettings);
+
+            var geoJson = $@"{{
+  ""type"": ""Point"",
+  ""coordinates"": [{x.ToJsonString()}, {y.ToJsonString()}, {z.ToJsonString()}]
+}}";
+
+            var actual = (IPointCollection)JsonConvert.DeserializeObject(geoJson, type, sut);
+
+            Assert.Equal(1, actual.PointCount);
+            Assert.Equal(x, actual.Point[0].X);
+            Assert.Equal(y, actual.Point[0].Y);
+            Assert.Equal(z, actual.Point[0].Z);
+
+            Assert.True(((IZAware) actual).ZAware);
+        }
+
         public class SimplifyTrue
         {
             [ArcObjectsTheory, ArcObjectsConventions(32188)]

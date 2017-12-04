@@ -110,6 +110,7 @@
     <Compile Include="ArcObjectsToGeoJson\PolylineClassToPointTests.cs" />
     <Compile Include="GeoJsonToArcObjects\LineStringToPointClassTests.cs" />
     <Compile Include="GeoJsonToArcObjects\LineStringToPolylineClassTests.cs" />
+    <Compile Include="GeoJsonToArcObjects\MultiLineStringToPolylineClassTests.cs" />
     <Compile Include="GeoJsonToArcObjects\PointToMultipointClassTests.cs" />
     <Compile Include="GeoJsonToArcObjects\PointToPointClassTests.cs" />
     <Compile Include="GeoJsonToArcObjects\PointToPolygonClassTests.cs" />

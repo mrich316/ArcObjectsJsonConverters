@@ -7,7 +7,7 @@ using Xunit;
 
 namespace ArcObjectJsonConverters.Tests.GeoJsonToArcObjects
 {
-    public class LineStringToPolylineClassTests
+    public class MultiLineStringToPolylineClassTests
     {
         [ArcObjectsTheory]
         [ArcObjectsConventions(32188, typeof(IPolyline))]
@@ -16,14 +16,19 @@ namespace ArcObjectJsonConverters.Tests.GeoJsonToArcObjects
         public void LineStringReturnsPolyline(Type type, GeometryGeoJsonConverter sut, double x1, double y1, double x2, double y2)
         {
             var geoJson = $@"{{
-  ""type"": ""LineString"",
-  ""coordinates"": [
+  ""type"": ""MultiLineString"",
+  ""coordinates"": [[
     [{x1.ToJsonString()}, {y1.ToJsonString()}],
     [{x2.ToJsonString()}, {y2.ToJsonString()}]
-  ]
+  ], [
+    [{x1.ToJsonString()}, {y1.ToJsonString()}],
+    [{x2.ToJsonString()}, {y2.ToJsonString()}]
+  ]]
 }}";
 
             var actual = (IPolyline)JsonConvert.DeserializeObject(geoJson, type, sut);
+
+            Assert.Equal(2, ((IGeometryCollection) actual).GeometryCount);
 
             Assert.Equal(x1, actual.FromPoint.X);
             Assert.Equal(y1, actual.FromPoint.Y);
@@ -36,17 +41,17 @@ namespace ArcObjectJsonConverters.Tests.GeoJsonToArcObjects
         [ArcObjectsConventions(32188, typeof(IPolyline))]
         [ArcObjectsConventions(32188, typeof(Polyline))]
         [ArcObjectsConventions(32188, typeof(PolylineClass))]
-        public void LineString3DReturnsPolyline3D(Type type, GeoJsonSerializerSettings serializerSettings, double x1, double y1, double z1, double x2, double y2, double z2)
+        public void MultiLineString3DReturnsPolyline3D(Type type, GeoJsonSerializerSettings serializerSettings, double x1, double y1, double z1, double x2, double y2, double z2)
         {
             serializerSettings.Dimensions = DimensionHandling.XYZ;
             var sut = new GeometryGeoJsonConverter(serializerSettings);
 
             var geoJson = $@"{{
-  ""type"": ""LineString"",
-  ""coordinates"": [
+  ""type"": ""MultiLineString"",
+  ""coordinates"": [[
     [{x1.ToJsonString()}, {y1.ToJsonString()}, {z1.ToJsonString()}],
     [{x2.ToJsonString()}, {y2.ToJsonString()}, {z2.ToJsonString()}]
-  ]
+  ]]
 }}";
 
             var actual = (IPolyline)JsonConvert.DeserializeObject(geoJson, type, sut);
@@ -59,22 +64,22 @@ namespace ArcObjectJsonConverters.Tests.GeoJsonToArcObjects
             Assert.Equal(y2, actual.ToPoint.Y);
             Assert.Equal(z2, actual.ToPoint.Z);
 
-            Assert.True(((IZAware) actual).ZAware);
+            Assert.True(((IZAware)actual).ZAware);
         }
 
         [ArcObjectsTheory, ArcObjectsConventions(32188)]
         public void SinglePositionArrayReturnsIncompletePolyline(GeometryGeoJsonConverter sut, double x1, double y1)
         {
             var geoJson = $@"{{
-  ""type"": ""LineString"",
-  ""coordinates"": [
+  ""type"": ""MultiLineString"",
+  ""coordinates"": [[
     [{x1.ToJsonString()}, {y1.ToJsonString()}]
-  ]
+  ]]
 }}";
 
             var actual = JsonConvert.DeserializeObject<IPolyline>(geoJson, sut);
             Assert.False(actual.IsEmpty);
-            Assert.Equal(1, ((IPointCollection) actual).PointCount);
+            Assert.Equal(1, ((IPointCollection)actual).PointCount);
         }
 
         public class SimplifyTrue
@@ -86,10 +91,10 @@ namespace ArcObjectJsonConverters.Tests.GeoJsonToArcObjects
                 var sut = new GeometryGeoJsonConverter(serializerSettings);
 
                 var geoJson = $@"{{
-  ""type"": ""LineString"",
-  ""coordinates"": [
+  ""type"": ""MultiLineString"",
+  ""coordinates"": [[
     [{x1.ToJsonString()}, {y1.ToJsonString()}]
-  ]
+  ]]
 }}";
 
                 var actual = JsonConvert.DeserializeObject<IPolyline>(geoJson, sut);
