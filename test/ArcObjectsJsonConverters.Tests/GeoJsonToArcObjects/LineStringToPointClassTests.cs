@@ -18,7 +18,7 @@ namespace ArcObjectJsonConverters.Tests.GeoJsonToArcObjects
     [101.0, 1.0]
   ]
 }";
-            Assert.Throws<JsonReaderException>(() => JsonConvert.DeserializeObject<IPolyline>(geoJson, sut));
+            Assert.Throws<JsonReaderException>(() => JsonConvert.DeserializeObject<IPoint>(geoJson, sut));
         }
     }
 }

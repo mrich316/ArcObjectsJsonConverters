@@ -175,25 +175,35 @@ namespace ArcObjectConverters
 
         protected object ReadLineString(JArray coordinates, Type objectType, object existingValue, JsonSerializer serializer)
         {
+            IGeometry geometry;
+
             if (objectType.IsAssignableFrom(typeof(PolylineClass)))
             {
-                return ReadLineStringCoordinatesArray(coordinates, (IPolyline) existingValue, serializer);
+                geometry = ReadLineStringCoordinatesArray(coordinates, (IPolyline) existingValue, serializer);
+            }
+            else
+            {
+                throw CreateJsonReaderException(
+                    coordinates.Parent,
+                    $"GeoJSON object of type \"LineString\" cannot be deserialized to \"{objectType.FullName}\".");
             }
 
-            throw CreateJsonReaderException(
-                coordinates.Parent,
-                $"GeoJSON object of type \"LineString\" cannot be deserialized to \"{objectType.FullName}\".");
+            if (_serializerSettings.Simplify)
+            {
+                ((ITopologicalOperator) geometry).Simplify();
+            }
+
+            return geometry;
         }
 
-        protected object ReadLineStringCoordinatesArray(JArray coordinates, IPolyline existingValue, JsonSerializer serializer)
+        protected IPolyline ReadLineStringCoordinatesArray(JArray coordinates, IPolyline existingValue, JsonSerializer serializer)
         {
             var polyline = existingValue ?? new PolylineClass();
-
             var path = (IPointCollection)new PathClass();
 
             foreach (var positionArray in coordinates)
             {
-                var point = ReadPositionArray(coordinates, null, serializer);
+                var point = ReadPositionArray(positionArray, null, serializer);
                 path.AddPoint(point);
             }
 
@@ -209,7 +219,7 @@ namespace ArcObjectConverters
                 return ReadPositionArray(coordinates, (IPoint) existingValue, serializer);
             }
 
-            IPointCollection pointCollection = null;
+            IPointCollection pointCollection;
 
             if (objectType.IsAssignableFrom(typeof(MultipointClass)))
             {
@@ -230,7 +240,7 @@ namespace ArcObjectConverters
                     $"GeoJSON object of type \"Point\" cannot be deserialized to \"{objectType.FullName}\".");
             }
 
-            var point = ReadPositionArray((JArray) coordinates, null, serializer);
+            var point = ReadPositionArray(coordinates, null, serializer);
             pointCollection.AddPoint(point);
 
             if (_serializerSettings.Simplify)
@@ -239,6 +249,16 @@ namespace ArcObjectConverters
             }
 
             return pointCollection;
+        }
+
+        protected IPoint ReadPositionArray(JToken coordinates, IPoint existingPoint, JsonSerializer serializer)
+        {
+            if (coordinates.Type != JTokenType.Array)
+            {
+                throw CreateJsonReaderException(coordinates, "A GeoJSON position must be an array of numbers.");
+            }
+
+            return ReadPositionArray((JArray) coordinates, existingPoint, serializer);
         }
 
         protected IPoint ReadPositionArray(JArray coordinates, IPoint existingPoint, JsonSerializer serializer)
