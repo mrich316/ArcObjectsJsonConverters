@@ -41,25 +41,27 @@ namespace ArcObjectConverters
             switch (geometry.GeometryType)
             {
                 case esriGeometryType.esriGeometryPoint:
-                    WritePointObject(writer, (IPoint) value, serializer);
+                    WritePoint(writer, (IPoint) value, serializer);
                     break;
 
                 case esriGeometryType.esriGeometryPolyline:
                     var polyline = (IPolyline) PrepareGeometry((IPolycurve) value);
-                    WriteMultiLineStringObject(writer, polyline, serializer);
+                    WriteMultiLineString(writer, polyline, serializer);
                     break;
 
                 case esriGeometryType.esriGeometryMultipoint:
                     var multipoint = (IMultipoint) PrepareGeometry((IMultipoint) value);
-                    WriteMultiPointObject(writer, multipoint, serializer);
+                    WriteMultiPoint(writer, multipoint, serializer);
                     break;
 
                 default:
-                    throw new JsonSerializationException($"{geometry.GeometryType} not supported by this implementation.");
+                    throw new JsonSerializationException(
+                        $"{geometry.GeometryType} not supported by this implementation.");
             }
         }
 
-        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue,
+            JsonSerializer serializer)
         {
             var json = JObject.Load(reader, _loadSettings);
 
@@ -67,7 +69,7 @@ namespace ArcObjectConverters
             var type = json["type"];
             if (type == null || type.Type != JTokenType.String)
             {
-                throw CreateJsonReaderException( type ?? json,
+                throw CreateJsonReaderException(type ?? json,
                     "GeoJSON property \"type\" is not found or its content is not a string.");
             }
 
@@ -95,7 +97,9 @@ namespace ArcObjectConverters
                     break;
 
                 case "Polygon":
-                    throw new JsonSerializationException($"GeoJSON object of type \"{type}\" is not supported by this implementation.");
+                    geometry = ReadPolygon((JArray) coordinates, objectType, existingValue, serializer);
+                    break;
+
                 case "MultiLineString":
                     geometry = ReadMultiLineString((JArray) coordinates, objectType, existingValue, serializer);
                     break;
@@ -103,17 +107,18 @@ namespace ArcObjectConverters
                 case "MultiPolygon":
                 case "MultiPoint":
                 default:
-                    throw new JsonSerializationException($"GeoJSON object of type \"{type}\" is not supported by this implementation.");
+                    throw new JsonSerializationException(
+                        $"GeoJSON object of type \"{type}\" is not supported by this implementation.");
             }
 
             if (_serializerSettings.Dimensions == DimensionHandling.XYZ)
             {
-                ((IZAware)geometry).ZAware = true;
+                ((IZAware) geometry).ZAware = true;
             }
 
             if (_serializerSettings.Simplify)
             {
-                ((ITopologicalOperator)geometry).Simplify();
+                ((ITopologicalOperator) geometry).Simplify();
             }
 
             return geometry;
@@ -141,15 +146,16 @@ namespace ArcObjectConverters
             if (value == null) return null;
 
             var hasNonLinearSegments = false;
-            ((ISegmentCollection)value).HasNonLinearSegments(ref hasNonLinearSegments);
+            ((ISegmentCollection) value).HasNonLinearSegments(ref hasNonLinearSegments);
 
-            var geometry = !_serializerSettings.SerializerHasSideEffects && _serializerSettings.Simplify && hasNonLinearSegments
-                ? (IPolycurve)((IClone)value).Clone()
+            var geometry = !_serializerSettings.SerializerHasSideEffects && _serializerSettings.Simplify &&
+                           hasNonLinearSegments
+                ? (IPolycurve) ((IClone) value).Clone()
                 : value;
 
             if (_serializerSettings.Simplify)
             {
-                var topo = (ITopologicalOperator2)geometry;
+                var topo = (ITopologicalOperator2) geometry;
                 topo.IsKnownSimple_2 = false;
                 topo.Simplify();
 
@@ -180,17 +186,51 @@ namespace ArcObjectConverters
             if (value == null) return null;
 
             var geometry = !_serializerSettings.SerializerHasSideEffects && _serializerSettings.Simplify
-                ? (IMultipoint)((IClone)value).Clone()
+                ? (IMultipoint) ((IClone) value).Clone()
                 : value;
 
             if (_serializerSettings.Simplify)
             {
-                var topo = (ITopologicalOperator2)geometry;
+                var topo = (ITopologicalOperator2) geometry;
                 topo.IsKnownSimple_2 = false;
                 topo.Simplify();
             }
 
             return geometry;
+        }
+
+        protected IGeometry ReadPolygon(JArray coordinates, Type objectType, object existingValue,
+            JsonSerializer serializer)
+        {
+            var polygon = (IPolygon) existingValue ?? new PolygonClass();
+
+            using (var iterator = coordinates.GetEnumerator())
+            {
+                if (!iterator.MoveNext()) return polygon;
+
+                var rings = (IGeometryCollection)polygon;
+
+                var exteriorRing = (IRing) ReadPositionArray(iterator.Current, new RingClass(), serializer);
+                if (!exteriorRing.IsExterior)
+                {
+                    exteriorRing.ReverseOrientation();
+                }
+
+                rings.AddGeometry(exteriorRing);
+
+                while (iterator.MoveNext())
+                {
+                    var interiorRing = (IRing)ReadPositionArray(iterator.Current, new RingClass(), serializer);
+                    if (interiorRing.IsExterior)
+                    {
+                        interiorRing.ReverseOrientation();
+                    }
+
+                    rings.AddGeometry(interiorRing);
+                }
+            }
+
+            return polygon;
         }
 
         protected IGeometry ReadMultiLineString(JArray coordinates, Type objectType, object existingValue,
@@ -200,19 +240,22 @@ namespace ArcObjectConverters
 
             foreach (var lineStringCoordinatesArray in coordinates)
             {
-                ReadLineStringCoordinatesArray(lineStringCoordinatesArray, polyline, serializer);
+                var part = ReadPositionArray(lineStringCoordinatesArray, new PathClass(), serializer);
+                ((IGeometryCollection) polyline).AddGeometry(part);
             }
 
             return polyline;
         }
 
-        protected IGeometry ReadLineString(JArray coordinates, Type objectType, object existingValue, JsonSerializer serializer)
+        protected IGeometry ReadLineString(JArray coordinates, Type objectType, object existingValue,
+            JsonSerializer serializer)
         {
             IGeometry geometry;
 
             if (objectType.IsAssignableFrom(typeof(PolylineClass)))
             {
-                geometry = ReadLineStringCoordinatesArray(coordinates, (IPolyline) existingValue, serializer);
+                var polyline = (IPointCollection) existingValue ?? new PolylineClass();
+                geometry = ReadPositionArray(coordinates, polyline, serializer);
             }
             else
             {
@@ -224,30 +267,27 @@ namespace ArcObjectConverters
             return geometry;
         }
 
-        protected IPolyline ReadLineStringCoordinatesArray(JToken coordinates, IPolyline existingValue,
+        protected IGeometry ReadPositionArray(JToken positions, IPointCollection points,
             JsonSerializer serializer)
         {
-            if (coordinates.Type != JTokenType.Array)
+            if (positions.Type != JTokenType.Array)
             {
-                throw CreateJsonReaderException(coordinates, "A GeoJSON LineString coordinates must be an array of position arrays.");
+                throw CreateJsonReaderException(positions, "GeoJSON position array must be an array of number arrays.");
             }
 
-            return ReadLineStringCoordinatesArray((JArray) coordinates, existingValue, serializer);
+            return ReadPositionArray((JArray) positions, points, serializer);
         }
 
-        protected IPolyline ReadLineStringCoordinatesArray(JArray coordinates, IPolyline existingValue, JsonSerializer serializer)
+        protected IGeometry ReadPositionArray(JArray positions, IPointCollection points,
+            JsonSerializer serializer)
         {
-            var polyline = existingValue ?? new PolylineClass();
-            var path = (IPointCollection)new PathClass();
-
-            foreach (var positionArray in coordinates)
+            foreach (var numbers in positions)
             {
-                var point = ReadPositionArray(positionArray, null, serializer);
-                path.AddPoint(point);
+                var point = ReadPosition(numbers, new PointClass(), serializer);
+                points.AddPoint(point);
             }
 
-            ((IGeometryCollection) polyline).AddGeometry((IGeometry) path);
-            return polyline;
+            return (IGeometry) points;
         }
 
         protected IGeometry ReadPoint(JArray coordinates, Type objectType, object existingValue,
@@ -255,7 +295,7 @@ namespace ArcObjectConverters
         {
             if (objectType.IsAssignableFrom(typeof(PointClass)))
             {
-                return ReadPositionArray(coordinates, (IPoint) existingValue, serializer);
+                return ReadPosition(coordinates, (IPoint) existingValue ?? new PointClass(), serializer);
             }
 
             IPointCollection pointCollection;
@@ -279,79 +319,79 @@ namespace ArcObjectConverters
                     $"GeoJSON object of type \"Point\" cannot be deserialized to \"{objectType.FullName}\".");
             }
 
-            var point = ReadPositionArray(coordinates, null, serializer);
+            var point = ReadPosition(coordinates, new PointClass(), serializer);
             pointCollection.AddPoint(point);
 
-            return (IGeometry)pointCollection;
+            return (IGeometry) pointCollection;
         }
 
-        protected IPoint ReadPositionArray(JToken coordinates, IPoint existingPoint, JsonSerializer serializer)
+        protected IPoint ReadPosition(JToken numbers, IPoint position, JsonSerializer serializer)
         {
-            if (coordinates.Type != JTokenType.Array)
+            if (numbers.Type != JTokenType.Array)
             {
-                throw CreateJsonReaderException(coordinates, "A GeoJSON position must be an array of numbers.");
+                throw CreateJsonReaderException(numbers, "GeoJSON position must be an array of numbers.");
             }
 
-            return ReadPositionArray((JArray) coordinates, existingPoint, serializer);
+            return ReadPosition((JArray) numbers, position, serializer);
         }
 
-        protected IPoint ReadPositionArray(JArray coordinates, IPoint existingPoint, JsonSerializer serializer)
+        protected IPoint ReadPosition(JArray numbers, IPoint position, JsonSerializer serializer)
         {
-            var point = existingPoint ?? new PointClass();
-
-            if (coordinates.Count == 0)
+            if (numbers.Count == 0)
             {
-                return point;
+                return position;
             }
 
-            if (coordinates.Count < 2)
+            if (numbers.Count < 2)
             {
-                throw CreateJsonReaderException(coordinates,
-                    "GeoJSON coordinates must contain at least two positions for a Point.");
+                throw CreateJsonReaderException(numbers,
+                    "GeoJSON position must contain at least two numbers for a Point.");
             }
 
             try
             {
-                point.X = coordinates[0].Value<double>();
+                position.X = numbers[0].Value<double>();
             }
             catch (Exception pointException)
             {
-                throw CreateJsonReaderException(coordinates[0], "Longitude (or Easting) could not be read.", pointException);
+                throw CreateJsonReaderException(numbers[0], "Longitude (or Easting) could not be read.",
+                    pointException);
             }
 
             try
             {
-                point.Y = coordinates[1].Value<double>();
+                position.Y = numbers[1].Value<double>();
             }
             catch (Exception pointException)
             {
-                throw CreateJsonReaderException(coordinates[1], "Latitude (or Northing) could not be read.", pointException);
+                throw CreateJsonReaderException(numbers[1], "Latitude (or Northing) could not be read.",
+                    pointException);
             }
 
             // TODO: Handle other dimensions: ie: M.
 
-            if (coordinates.Count > 2)
+            if (numbers.Count > 2)
             {
                 try
                 {
-                    point.Z = coordinates[2].Value<double>();
-                    ((IZAware)point).ZAware = true;
+                    position.Z = numbers[2].Value<double>();
+                    ((IZAware) position).ZAware = true;
                 }
                 catch (Exception pointException)
                 {
-                    throw CreateJsonReaderException(coordinates[2], "Altitude could not be read.", pointException);
+                    throw CreateJsonReaderException(numbers[2], "Altitude could not be read.", pointException);
                 }
             }
             else if (_serializerSettings.Dimensions == DimensionHandling.XYZ)
             {
-                point.Z = _serializerSettings.DefaultZValue;
-                ((IZAware)point).ZAware = true;
+                position.Z = _serializerSettings.DefaultZValue;
+                ((IZAware) position).ZAware = true;
             }
 
-            return point;
+            return position;
         }
 
-        protected void WritePositionArray(JsonWriter writer, IPoint value, JsonSerializer serializer)
+        protected void WritePosition(JsonWriter writer, IPoint value, JsonSerializer serializer)
         {
             writer.WriteStartArray();
             writer.WriteValue(Math.Round(value.X, _serializerSettings.Precision));
@@ -359,7 +399,7 @@ namespace ArcObjectConverters
 
             if (_serializerSettings.Dimensions == DimensionHandling.XYZ)
             {
-                var zAware = (IZAware)value;
+                var zAware = (IZAware) value;
                 var z = !zAware.ZAware || double.IsNaN(value.Z)
                     ? _serializerSettings.DefaultZValue
                     : Math.Round(value.Z, _serializerSettings.Precision);
@@ -370,7 +410,7 @@ namespace ArcObjectConverters
             writer.WriteEndArray();
         }
 
-        protected void WritePointObject(JsonWriter writer, IPoint point, JsonSerializer serializer)
+        protected void WritePoint(JsonWriter writer, IPoint point, JsonSerializer serializer)
         {
             writer.WriteStartObject();
 
@@ -378,14 +418,14 @@ namespace ArcObjectConverters
             writer.WriteValue("Point");
 
             writer.WritePropertyName("coordinates");
-            WritePositionArray(writer, point, serializer);
+            WritePosition(writer, point, serializer);
 
             writer.WriteEndObject();
         }
 
-        protected void WriteMultiPointObject(JsonWriter writer, IMultipoint multiPoint, JsonSerializer serializer)
+        protected void WriteMultiPoint(JsonWriter writer, IMultipoint multiPoint, JsonSerializer serializer)
         {
-            var pointCollection = (IPointCollection)multiPoint;
+            var pointCollection = (IPointCollection) multiPoint;
             var points = new List<IPoint>(pointCollection.PointCount);
             for (int i = 0, n = pointCollection.PointCount; i < n; i++)
             {
@@ -395,10 +435,10 @@ namespace ArcObjectConverters
                 points.Add(point);
             }
 
-            WriteMultiPointObject(writer, points, serializer);
+            WriteMultiPoint(writer, points, serializer);
         }
 
-        protected void WriteMultiPointObject(JsonWriter writer, List<IPoint> points, JsonSerializer serializer)
+        protected void WriteMultiPoint(JsonWriter writer, List<IPoint> points, JsonSerializer serializer)
         {
             if (points.Count > 1)
             {
@@ -411,7 +451,7 @@ namespace ArcObjectConverters
                 writer.WriteStartArray();
                 foreach (var point in points)
                 {
-                    WritePositionArray(writer, point, serializer);
+                    WritePosition(writer, point, serializer);
                 }
                 writer.WriteEndArray();
 
@@ -419,7 +459,7 @@ namespace ArcObjectConverters
             }
             else if (points.Count == 1)
             {
-                WritePointObject(writer, points[0], serializer);
+                WritePoint(writer, points[0], serializer);
             }
             else
             {
@@ -427,19 +467,20 @@ namespace ArcObjectConverters
             }
         }
 
-        protected void WriteLineStringCoordinatesArray(JsonWriter writer, IPointCollection lineString, JsonSerializer serializer)
+        protected void WritePositionArray(JsonWriter writer, IPointCollection lineString,
+            JsonSerializer serializer)
         {
             writer.WriteStartArray();
 
             for (int i = 0, n = lineString.PointCount; i < n; i++)
             {
-                WritePositionArray(writer, lineString.Point[i], serializer);
+                WritePosition(writer, lineString.Point[i], serializer);
             }
 
             writer.WriteEndArray();
         }
 
-        protected void WriteLineStringObject(JsonWriter writer, IPointCollection lineString, JsonSerializer serializer)
+        protected void WriteLineString(JsonWriter writer, IPointCollection positions, JsonSerializer serializer)
         {
             writer.WriteStartObject();
 
@@ -447,21 +488,21 @@ namespace ArcObjectConverters
             writer.WriteValue("LineString");
 
             writer.WritePropertyName("coordinates");
-            WriteLineStringCoordinatesArray(writer, lineString, serializer);
+            WritePositionArray(writer, positions, serializer);
 
             writer.WriteEndObject();
         }
 
-        protected void WriteMultiLineStringObject(JsonWriter writer, IPolyline polyline, JsonSerializer serializer)
+        protected void WriteMultiLineString(JsonWriter writer, IPolyline polyline, JsonSerializer serializer)
         {
-            var collection = (IGeometryCollection)polyline;
+            var collection = (IGeometryCollection) polyline;
             var paths = new List<IPointCollection>(collection.GeometryCount);
             var points = new List<IPoint>();
 
             for (int i = 0, n = collection.GeometryCount; i < n; i++)
             {
-                var path = (IPath)collection.Geometry[i];
-                var pathPoints = (IPointCollection)path;
+                var path = (IPath) collection.Geometry[i];
+                var pathPoints = (IPointCollection) path;
 
                 // Skip incomplete path (a single point) or zero-length segments.
                 if (pathPoints.PointCount > 1 && path.Length > _serializerSettings.Tolerance)
@@ -495,7 +536,7 @@ namespace ArcObjectConverters
 
                 foreach (var path in paths)
                 {
-                    WriteLineStringCoordinatesArray(writer, path, serializer);
+                    WritePositionArray(writer, path, serializer);
                 }
 
                 writer.WriteEndArray();
@@ -503,16 +544,16 @@ namespace ArcObjectConverters
             }
             else if (paths.Count == 1)
             {
-                WriteLineStringObject(writer, paths[0], serializer);
+                WriteLineString(writer, paths[0], serializer);
             }
             else if (points.Count > 1)
             {
-                WriteMultiPointObject(writer, points, serializer);
+                WriteMultiPoint(writer, points, serializer);
             }
             else if (points.Count == 1)
             {
                 // Incomplete path (it's a single point)
-                WritePointObject(writer, points[0], serializer);
+                WritePoint(writer, points[0], serializer);
             }
             else
             {
@@ -520,13 +561,15 @@ namespace ArcObjectConverters
             }
         }
 
-        protected virtual JsonException CreateJsonReaderException(JToken token, string message, Exception innerException = null)
+        protected virtual JsonException CreateJsonReaderException(JToken token, string message,
+            Exception innerException = null)
         {
             var lineInfo = (IJsonLineInfo) token;
 
             var exception = lineInfo == null || !lineInfo.HasLineInfo()
                 ? new JsonReaderException(message, innerException)
-                : new JsonReaderException(message, token.Path, lineInfo.LineNumber, lineInfo.LinePosition, innerException);
+                : new JsonReaderException(message, token.Path, lineInfo.LineNumber, lineInfo.LinePosition,
+                    innerException);
 
             return exception;
         }
