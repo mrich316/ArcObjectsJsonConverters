@@ -105,7 +105,13 @@ namespace ArcObjectConverters
                     break;
 
                 case "MultiPolygon":
+                    throw new JsonSerializationException(
+                        $"GeoJSON object of type \"{type}\" is not supported by this implementation.");
+
                 case "MultiPoint":
+                    geometry = ReadMultiPoint((JArray)coordinates, objectType, existingValue, serializer);
+                    break;
+
                 default:
                     throw new JsonSerializationException(
                         $"GeoJSON object of type \"{type}\" is not supported by this implementation.");
@@ -236,6 +242,13 @@ namespace ArcObjectConverters
         protected IGeometry ReadMultiLineString(JArray coordinates, Type objectType, object existingValue,
             JsonSerializer serializer)
         {
+            if (!objectType.IsAssignableFrom(typeof(PolylineClass)))
+            {
+                throw CreateJsonReaderException(
+                    coordinates.Parent,
+                    $"GeoJSON object of type \"MultiLineString\" cannot be deserialized to \"{objectType.FullName}\".");
+            }
+
             var polyline = (IPolyline) existingValue ?? new PolylineClass();
 
             foreach (var lineStringCoordinatesArray in coordinates)
@@ -250,19 +263,15 @@ namespace ArcObjectConverters
         protected IGeometry ReadLineString(JArray coordinates, Type objectType, object existingValue,
             JsonSerializer serializer)
         {
-            IGeometry geometry;
-
-            if (objectType.IsAssignableFrom(typeof(PolylineClass)))
-            {
-                var polyline = (IPointCollection) existingValue ?? new PolylineClass();
-                geometry = ReadPositionArray(coordinates, polyline, serializer);
-            }
-            else
+            if (!objectType.IsAssignableFrom(typeof(PolylineClass)))
             {
                 throw CreateJsonReaderException(
                     coordinates.Parent,
                     $"GeoJSON object of type \"LineString\" cannot be deserialized to \"{objectType.FullName}\".");
             }
+
+            var polyline = (IPointCollection) existingValue ?? new PolylineClass();
+            var geometry = ReadPositionArray(coordinates, polyline, serializer);
 
             return geometry;
         }
@@ -288,6 +297,27 @@ namespace ArcObjectConverters
             }
 
             return (IGeometry) points;
+        }
+
+        protected IGeometry ReadMultiPoint(JArray coordinates, Type objectType, object existingValue,
+            JsonSerializer serializer)
+        {
+            if (!objectType.IsAssignableFrom(typeof(MultipointClass)))
+            {
+                throw CreateJsonReaderException(
+                    coordinates.Parent,
+                    $"GeoJSON object of type \"MultiPoint\" cannot be deserialized to \"{objectType.FullName}\".");
+            }
+
+            var pointCollection = (IPointCollection)existingValue ?? new MultipointClass();
+
+            foreach (var position in coordinates)
+            {
+                var point = ReadPosition(position, new PointClass(), serializer);
+                pointCollection.AddPoint(point);
+            }
+
+            return (IGeometry)pointCollection;
         }
 
         protected IGeometry ReadPoint(JArray coordinates, Type objectType, object existingValue,
