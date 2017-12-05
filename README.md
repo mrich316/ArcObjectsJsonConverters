@@ -38,28 +38,76 @@ complain by throwing an exception.
 
 ## Conversion Table for ArcObjects Geometries to GeoJson
 
-| Source ArcObject Geometry | Destination GeoJson (`Simplify=false`) | Destination GeoJson (`Simplify=true`)
-----------------------------|----------------------------------------|--------------------------------------
-`Point`                     | `Point` | `Point`
-`Point` (without coords)    | `null`  | `null`
-`Multipoint`    | `MultiPoint` | `MultiPoint`
-`Multipoint` (without coords)    | `null` | `null`
-`Multipoint` (with copies of the same point) | `MultiPoint` | `Point`
-`Polyline` (incomplete path, ie: single point) | `Point` | `null`
-`Polyline` (single path) | `LineString` | `LineString`
-`Polyline` (many paths) | `MultiLineString` | `MultiLineString`
-`Polyline` (many incomplete paths) | `MultiPoint` | `null`
-`Polyline` (path + incomplete path (single point) | `LineString` (incomplete path removed) | `LineString` (incomplete path removed)
-`Polyline` (many paths + incomplete path, ie: single point) | `MultiLineString` (incomplete path removed) | `MultiLineString` (incomplete path removed)
+### Definitions
+
+- `invalid`: denotes a state not appropriate for the type being serialized.
+   For example:
+
+  - a path with a single point
+  - a path or ring length smaller than `Tolerance`
+  - a ring with less than 4 coordinates
+  - an unclosed ring
+  - a polygon without an exterior ring
+  - an empty geometry part
+
+### Setting `ForceMulti`
+
+Using `ForceMulti=false` will make the serializer ajust to input
+geometries.  If a `Multipoint`, `Polyline` or `Polygon` contains a
+single part, the serializer will write a GeoJSON type of `Point`, `LineString` or `Polygon`.
+
+If `ForceMulti=true`, all ArcObjects types will always be serialized as `Multi*`,
+even if they contain a single part, because ArcObjects does not make a distinction
+between single and multi-parts (excepting `Point`).
+
+### Setting `Simplify`
+
+Using `Simplify=true` will use `ITopologicalOperator.Simplify()` before
+serializing a geometry. `Simplify` may remove duplicate geometry parts
+and may reorient segments in paths and rings.
+
+| ArcObjects | GeoJSON         | ForceMulti | Simplify | ForceMulti + Simplify |
+-------------|:---------------:|:----------:|:--------:|:---------------------:
+empty or invalid geometry | `null` | `null`   | `null`     | `null`
+`Point`      | `P`             | `P`          | `P`        | `P`
+`Multipoint` (single point)              | `P`  | `MP` | `P` | `MP`
+`Multipoint` (a point + invalid points`*`)  | `P`  | `MP` | `P` | `MP`
+`Multipoint` (multiple different points) | `MP` | `MP` | `MP`| `MP`
+`Multipoint` (copies of the same point)  | `MP` | `MP` | `P` | `MP`
+`Polyline` (single path)                 | `L`  | `ML` | `L` | `ML`
+`Polyline` (duplicated path)             | `ML` | `ML` | `L`| `ML`
+`Polyline` (multi path)                  | `ML` | `ML` | `ML`| `ML`
+`Polyline` (single path + invalid paths`*`) | `L`  | `ML` | `L` | `ML`
+`Polyline` (only invalid paths`*`) | `null` | `null` | `null` | `null`
+`Polygon` (single exterior ring)         | `P`  | `MP` | `P` | `MP`
+`Polygon` (duplicate exterior ring)      | `MP` | `MP` | `P`| `MP`
+`Polygon` (many exterior ring)           | `MP` | `MP` | `MP`| `MP`
+`Polygon` (exterior ring + invalid exterior ring`*`) | `P`  | `MP` | `P` | `MP`
+`Polygon` (exterior ring + invalid interior ring`**`) | `P`  | `MP` | `P` | `MP`
+`Polygon` (only invalid rings)  | `null` | `null` | `null` | `null`
+`Polygon` (only interior rings) | `null` | `null` | `null` | `null`
+
+| Legend |  |
+:-------:|---
+P  | Point
+MP | MultiPoint
+L  | LineString
+ML | MultiLineString
+P  | Polygon
+MP | MultiPolygon
+
+Notes:
+- `*` Invalid parts are always removed.
+- `**` Polygon serialized without a hole
 
 ## Status
 
 |Geometry    |Serialization|Deserialization|Notes|
 -------------|------|------|---
-`Point`      | done | done
-`Polyline`   | done | partial | When true curves are present, the geometry is always generalized, even with `Simplify=false`. This will eventually be adjusted to only generalize the curved segments.
+`Point`      | partial | partial |
+`Polyline`   | partial | partial | When true curves are present, the geometry is always generalized, even with `Simplify=false`. This will eventually be adjusted to only generalize the curved segments.
 `Polygon`    | todo | todo |
-`MultiPoint` | done | todo |
+`MultiPoint` | partial | todo |
 
 A [nuget](https://nuget.org/) could be made when a geometry will support
 serialization and deserialization.
