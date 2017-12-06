@@ -45,8 +45,13 @@ namespace ArcObjectConverters
                     break;
 
                 case esriGeometryType.esriGeometryPolyline:
-                    var polyline = (IPolyline) PrepareGeometry((IPolycurve) value);
+                    var polyline = (IPolyline)PrepareGeometry((IPolycurve)value);
                     WriteMultiLineString(writer, polyline, serializer);
+                    break;
+
+                case esriGeometryType.esriGeometryPolygon:
+                    var polygon = (IPolygon)PrepareGeometry((IPolycurve)value);
+                    WriteMultiPolygon(writer, polygon, serializer);
                     break;
 
                 case esriGeometryType.esriGeometryMultipoint:
@@ -510,24 +515,10 @@ namespace ArcObjectConverters
             writer.WriteEndArray();
         }
 
-        protected void WriteLineString(JsonWriter writer, IPointCollection positions, JsonSerializer serializer)
-        {
-            writer.WriteStartObject();
-
-            writer.WritePropertyName("type");
-            writer.WriteValue("LineString");
-
-            writer.WritePropertyName("coordinates");
-            WritePositionArray(writer, positions, serializer);
-
-            writer.WriteEndObject();
-        }
-
         protected void WriteMultiLineString(JsonWriter writer, IPolyline polyline, JsonSerializer serializer)
         {
             var collection = (IGeometryCollection) polyline;
             var paths = new List<IPointCollection>(collection.GeometryCount);
-            var points = new List<IPoint>();
 
             for (int i = 0, n = collection.GeometryCount; i < n; i++)
             {
@@ -538,20 +529,6 @@ namespace ArcObjectConverters
                 if (pathPoints.PointCount > 1 && path.Length > _serializerSettings.Tolerance)
                 {
                     paths.Add(pathPoints);
-                }
-                // It could have two points, but at a distance lower than {_serializerSettings.Tolerance},
-                // so we check > 0.
-                else if (pathPoints.PointCount > 0)
-                {
-                    for (int j = 0, m = pathPoints.PointCount; j < m; j++)
-                    {
-                        // Take the first non-empty point.
-                        var point = pathPoints.Point[j];
-                        if (point.IsEmpty) continue;
-
-                        points.Add(point);
-                        break;
-                    }
                 }
             }
 
@@ -574,20 +551,116 @@ namespace ArcObjectConverters
             }
             else if (paths.Count == 1)
             {
-                WriteLineString(writer, paths[0], serializer);
-            }
-            else if (points.Count > 1)
-            {
-                WriteMultiPoint(writer, points, serializer);
-            }
-            else if (points.Count == 1)
-            {
-                // Incomplete path (it's a single point)
-                WritePoint(writer, points[0], serializer);
+                writer.WriteStartObject();
+
+                writer.WritePropertyName("type");
+                writer.WriteValue("LineString");
+
+                writer.WritePropertyName("coordinates");
+                WritePositionArray(writer, paths[0], serializer);
+
+                writer.WriteEndObject();
             }
             else
             {
                 writer.WriteNull();
+            }
+        }
+
+        protected void WriteMultiPolygon(JsonWriter writer, IPolygon polygon, JsonSerializer serializer)
+        {
+            var exteriorRingBag = (IGeometryCollection) ((IPolygon4) polygon).ExteriorRingBag;
+            var exteriorRings = new List<IRing>();
+
+            for (int i = 0, n = exteriorRingBag.GeometryCount; i < n; i++)
+            {
+                var ring = (IRing) exteriorRingBag.Geometry[i];
+                var pointCollection = (IPointCollection)ring;
+
+                if (ring.IsClosed && pointCollection.PointCount > 3 && ring.Length > _serializerSettings.Tolerance)
+                {
+                    exteriorRings.Add(ring);
+                }
+            }
+
+            if (exteriorRings.Count > 1)
+            {
+                writer.WriteStartObject();
+                writer.WritePropertyName("type");
+                writer.WriteValue("MultiPolygon");
+
+                writer.WritePropertyName("coordinates");
+                writer.WriteStartArray();
+
+                foreach (var exteriorRing in exteriorRings)
+                {
+                    var interiorRings = GetInteriorRings((IPolygon4)polygon, exteriorRing);
+
+                    WritePolygonCoordinates(writer, exteriorRing, interiorRings, serializer);
+                }
+
+                writer.WriteEndArray();
+                writer.WriteEndObject();
+            }
+            else if (exteriorRings.Count == 1)
+            {
+                writer.WriteStartObject();
+                writer.WritePropertyName("type");
+                writer.WriteValue("Polygon");
+
+                var exteriorRing = exteriorRings[0];
+                var interiorRings = GetInteriorRings((IPolygon4) polygon, exteriorRing);
+
+                writer.WritePropertyName("coordinates");
+                WritePolygonCoordinates(writer, exteriorRing, interiorRings, serializer);
+
+                writer.WriteEndObject();
+            }
+            else
+            {
+                writer.WriteNull();
+            }
+        }
+
+        protected void WritePolygonCoordinates(JsonWriter writer, IRing exteriorRing, IEnumerable<IRing> interiorRings,
+            JsonSerializer serializer)
+        {
+            writer.WriteStartArray();
+
+            WriteLinearRing(writer, exteriorRing, serializer);
+
+            // Serialize interior rings (holes), if present.
+            foreach (var interiorRing in interiorRings)
+            {
+                WriteLinearRing(writer, interiorRing, serializer);
+            }
+
+            writer.WriteEndArray();
+        }
+
+        protected void WriteLinearRing(JsonWriter writer, IRing ring, JsonSerializer serializer)
+        {
+            writer.WriteStartArray();
+
+            var pointCollection = (IPointCollection)ring;
+
+            // For ESRI, it's the left hand rule: exterior ring is CLOCKWISE.
+            // Loop in reverse to match the right hand rule.
+            var i = pointCollection.PointCount;
+            while (i >= 0)
+            {
+                WritePosition(writer, pointCollection.Point[--i], serializer);
+            }
+
+            writer.WriteEndArray();
+        }
+
+        protected IEnumerable<IRing> GetInteriorRings(IPolygon4 polygon, IRing exteriorRing)
+        {
+            var interiorRings = (IGeometryCollection) polygon.InteriorRingBag[exteriorRing];
+            for (int i = 0, n = interiorRings.GeometryCount; i < n; i++)
+            {
+                yield return (IRing) interiorRings.Geometry[i];
             }
         }
 
