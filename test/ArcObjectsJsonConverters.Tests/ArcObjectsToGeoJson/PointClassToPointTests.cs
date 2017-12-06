@@ -1,7 +1,6 @@
 ﻿using ArcObjectConverters;
 using ESRI.ArcGIS.Geometry;
 using Newtonsoft.Json;
-using VL.ArcObjectsApi;
 using VL.ArcObjectsApi.Xunit2;
 using Xunit;
 
@@ -9,8 +8,6 @@ namespace ArcObjectJsonConverters.Tests.ArcObjectsToGeoJson
 {
     public class PointClassToPointTests
     {
-        private readonly IArcObjectFactory _factory = new ClientArcObjectFactory();
-
         [ArcObjectsTheory, ArcObjectsConventions(32188)]
         public void NullReturnsNull(GeometryGeoJsonConverter sut)
         {

@@ -2,7 +2,6 @@
 using ArcObjectConverters;
 using ESRI.ArcGIS.Geometry;
 using Newtonsoft.Json;
-using VL.ArcObjectsApi;
 using VL.ArcObjectsApi.Xunit2;
 using Xunit;
 
@@ -10,8 +9,6 @@ namespace ArcObjectJsonConverters.Tests.ArcObjectsToGeoJson
 {
     public class GeometryGeoJsonConverterTests
     {
-        private static readonly IArcObjectFactory Factory = new ClientArcObjectFactory();
-
         [ArcObjectsFact]
         public void CtorThrowsOnNull()
         {
@@ -23,11 +20,11 @@ namespace ArcObjectJsonConverters.Tests.ArcObjectsToGeoJson
             [ArcObjectsTheory, ArcObjectsConventions(32188)]
             public void WithoutSideEffectsReturnsClone(IPolyline expected, ILine line, IBezierCurve curve)
             {
-                var path1 = (ISegmentCollection)Factory.CreateObject<Path>();
+                var path1 = (ISegmentCollection) new PathClass();
                 path1.AddSegment((ISegment) line);
                 ((IGeometryCollection)expected).AddGeometry((IGeometry)path1);
 
-                var path2 = (ISegmentCollection)Factory.CreateObject<Path>();
+                var path2 = (ISegmentCollection) new PathClass();
                 path2.AddSegment((ISegment) curve);
                 ((IGeometryCollection) expected).AddGeometry((IGeometry) path2);
 
@@ -44,11 +41,11 @@ namespace ArcObjectJsonConverters.Tests.ArcObjectsToGeoJson
             [ArcObjectsTheory, ArcObjectsConventions(32188)]
             public void WithSideEffectsReturnsSameInstance(IPolyline expected, ILine line, IBezierCurve curve)
             {
-                var path1 = (ISegmentCollection)Factory.CreateObject<Path>();
+                var path1 = (ISegmentCollection) new PathClass();
                 path1.AddSegment((ISegment)line);
                 ((IGeometryCollection)expected).AddGeometry((IGeometry)path1);
 
-                var path2 = (ISegmentCollection)Factory.CreateObject<Path>();
+                var path2 = (ISegmentCollection) new PathClass();
                 path2.AddSegment((ISegment)curve);
                 ((IGeometryCollection)expected).AddGeometry((IGeometry)path2);
 

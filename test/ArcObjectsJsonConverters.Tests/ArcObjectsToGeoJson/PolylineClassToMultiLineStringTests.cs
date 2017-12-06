@@ -2,29 +2,26 @@
 using ArcObjectConverters;
 using ESRI.ArcGIS.Geometry;
 using Newtonsoft.Json;
-using VL.ArcObjectsApi;
 using VL.ArcObjectsApi.Xunit2;
 
 namespace ArcObjectJsonConverters.Tests.ArcObjectsToGeoJson
 {
     public class PolylineClassToMultiLineStringTests
     {
-        private static readonly IArcObjectFactory Factory = new ClientArcObjectFactory();
-
         [ArcObjectsTheory, ArcObjectsConventions(32188)]
         public void TouchingPathsReturnsMultiLineString(GeometryGeoJsonConverter sut, ILine line, IPoint point, ISpatialReference spatialReference)
         {
-            var path1 = (ISegmentCollection)Factory.CreateObject<Path>();
+            var path1 = (ISegmentCollection) new PathClass();
             path1.AddSegment((ISegment)line);
 
-            var otherLine = (ILine) Factory.CreateObject<Line>();
+            var otherLine = (ILine) new LineClass();
             otherLine.FromPoint = line.ToPoint;
             otherLine.ToPoint = point;
 
-            var path2 = (ISegmentCollection)Factory.CreateObject<Path>();
+            var path2 = (ISegmentCollection) new PathClass();
             path2.AddSegment((ISegment)otherLine);
 
-            var polyline = (IGeometryCollection)Factory.CreateObject<Polyline>();
+            var polyline = (IGeometryCollection) new PolylineClass();
             polyline.AddGeometry((IGeometry)path1);
             polyline.AddGeometry((IGeometry)path2);
 
@@ -63,13 +60,13 @@ namespace ArcObjectJsonConverters.Tests.ArcObjectsToGeoJson
         [ArcObjectsTheory, ArcObjectsConventions(32188)]
         public void NonTouchingPathsReturnsMultiLineString(GeometryGeoJsonConverter sut, ILine line, ILine otherLine, ISpatialReference spatialReference)
         {
-            var path1 = (ISegmentCollection)Factory.CreateObject<Path>();
+            var path1 = (ISegmentCollection) new PathClass();
             path1.AddSegment((ISegment)line);
 
-            var path2 = (ISegmentCollection)Factory.CreateObject<Path>();
+            var path2 = (ISegmentCollection) new PathClass();
             path2.AddSegment((ISegment)otherLine);
 
-            var polyline = (IGeometryCollection)Factory.CreateObject<Polyline>();
+            var polyline = (IGeometryCollection) new PolylineClass();
             polyline.AddGeometry((IGeometry)path1);
             polyline.AddGeometry((IGeometry)path2);
 
@@ -125,11 +122,11 @@ namespace ArcObjectJsonConverters.Tests.ArcObjectsToGeoJson
             // Prepare the actual test value.
             polyline.SetEmpty();
 
-            var segments1 = (ISegmentCollection)Factory.CreateObject<Path>();
+            var segments1 = (ISegmentCollection) new PathClass();
             segments1.AddSegment((ISegment) line);
             segments1.AddSegment((ISegment) otherLine);
 
-            var segments2 = (ISegmentCollection)Factory.CreateObject<Path>();
+            var segments2 = (ISegmentCollection) new PathClass();
             segments2.AddSegment((ISegment) bezier);
 
             ((IGeometryCollection)polyline).AddGeometry((IGeometry)segments1);
@@ -155,10 +152,10 @@ namespace ArcObjectJsonConverters.Tests.ArcObjectsToGeoJson
                 serializerSettings.Simplify = true;
                 var sut = new GeometryGeoJsonConverter(serializerSettings);
 
-                var path1 = (ISegmentCollection)Factory.CreateObject<Path>();
+                var path1 = (ISegmentCollection) new PathClass();
                 path1.AddSegment((ISegment)line);
 
-                var path2 = (ISegmentCollection)Factory.CreateObject<Path>();
+                var path2 = (ISegmentCollection) new PathClass();
                 path2.AddSegment((ISegment)otherLine);
 
                 polyline.SetEmpty();
