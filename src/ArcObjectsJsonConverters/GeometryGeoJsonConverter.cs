@@ -658,9 +658,16 @@ namespace ArcObjectConverters
         protected IEnumerable<IRing> GetInteriorRings(IPolygon4 polygon, IRing exteriorRing)
         {
             var interiorRings = (IGeometryCollection) polygon.InteriorRingBag[exteriorRing];
+
             for (int i = 0, n = interiorRings.GeometryCount; i < n; i++)
             {
-                yield return (IRing) interiorRings.Geometry[i];
+                var ring = (IRing) interiorRings.Geometry[i];
+                var pointCollection = (IPointCollection) ring;
+
+                if (ring.IsClosed && pointCollection.PointCount > 3 && ring.Length > _serializerSettings.Tolerance)
+                {
+                    yield return ring;
+                }
             }
         }
 
