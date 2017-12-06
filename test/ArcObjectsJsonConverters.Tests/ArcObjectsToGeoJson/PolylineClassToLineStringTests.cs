@@ -171,6 +171,8 @@ namespace ArcObjectJsonConverters.Tests.ArcObjectsToGeoJson
             JsonAssert.Equal(expected, actual);
         }
 
+
+
         public class SimplifyTrue
         {
             [ArcObjectsTheory, ArcObjectsConventions(32188)]

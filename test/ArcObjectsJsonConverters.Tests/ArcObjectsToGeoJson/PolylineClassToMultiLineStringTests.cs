@@ -109,11 +109,8 @@ namespace ArcObjectJsonConverters.Tests.ArcObjectsToGeoJson
         }
 
         [ArcObjectsTheory, ArcObjectsConventions(32188)]
-        public void OnlyCurvesAreGeneralized(IPolyline polyline, ILine line, ILine otherLine, IPoint extensionPoint, IBezierCurve bezier)
+        public void OnlyCurvesAreGeneralized(GeometryGeoJsonConverter sut, IPolyline polyline, ILine line, ILine otherLine, IPoint extensionPoint, IBezierCurve bezier)
         {
-            var serializerSettings = new GeoJsonSerializerSettings();
-            var sut = new GeometryGeoJsonConverter(serializerSettings);
-
             // Create {otherLine} that is an extension to {line}.
             // This segment must not be simplified during the serialization.
             line.QueryPoint(esriSegmentExtension.esriExtendAtTo, line.Length + line.Length / 2, false, extensionPoint);
@@ -143,15 +140,103 @@ namespace ArcObjectJsonConverters.Tests.ArcObjectsToGeoJson
 ]", actual);
         }
 
+        public class ForceMultiGeometryTrue
+        {
+            private readonly GeometryGeoJsonConverter _sut;
+
+            public ForceMultiGeometryTrue()
+            {
+                _sut = new GeometryGeoJsonConverter(new GeoJsonSerializerSettings
+                {
+                    ForceMultiGeometry = true
+                });
+            }
+
+            [ArcObjectsTheory, ArcObjectsConventions(32188)]
+            public void SinglePathReturnsMultiLineString(IPolyline polyline, ILine line, ISpatialReference spatialReference)
+            {
+                polyline.SetEmpty();
+                polyline.SpatialReference = spatialReference;
+                ((ISegmentCollection) polyline).AddSegment((ISegment) line);
+
+                var actual = JsonConvert.SerializeObject(polyline, Formatting.Indented, _sut);
+                var expected = $@"{{
+  ""type"": ""MultiLineString"",
+  ""coordinates"": [
+    [
+      [
+        {line.FromPoint.X.ToJsonString()},
+        {line.FromPoint.Y.ToJsonString()}
+      ],
+      [
+        {line.ToPoint.X.ToJsonString()},
+        {line.ToPoint.Y.ToJsonString()}
+      ]
+    ]
+  ]
+}}";
+
+                JsonAssert.Equal(expected, actual);
+            }
+        }
+
         public class SimplifyTrue
         {
+            private readonly GeometryGeoJsonConverter _sut;
+
+            public SimplifyTrue()
+            {
+                _sut = new GeometryGeoJsonConverter(new GeoJsonSerializerSettings
+                {
+                    Simplify = true
+                });
+            }
+
+            [ArcObjectsTheory, ArcObjectsConventions(32188)]
+            public void TouchingPathsReturnsLineString(ILine line, IPoint point, ISpatialReference spatialReference)
+            {
+                var path1 = (ISegmentCollection)new PathClass();
+                path1.AddSegment((ISegment)line);
+
+                var otherLine = (ILine)new LineClass();
+                otherLine.FromPoint = line.ToPoint;
+                otherLine.ToPoint = point;
+
+                var path2 = (ISegmentCollection)new PathClass();
+                path2.AddSegment((ISegment)otherLine);
+
+                var polyline = (IGeometryCollection)new PolylineClass();
+                polyline.AddGeometry((IGeometry)path1);
+                polyline.AddGeometry((IGeometry)path2);
+
+                ((IGeometry)polyline).SpatialReference = spatialReference;
+
+                var actual = JsonConvert.SerializeObject(polyline, Formatting.Indented, _sut);
+                var expected = $@"{{
+  ""type"": ""LineString"",
+  ""coordinates"": [
+    [
+      {line.FromPoint.X.ToJsonString()},
+      {line.FromPoint.Y.ToJsonString()}
+    ],
+    [
+      {otherLine.FromPoint.X.ToJsonString()},
+      {otherLine.FromPoint.Y.ToJsonString()}
+    ],
+    [
+      {otherLine.ToPoint.X.ToJsonString()},
+      {otherLine.ToPoint.Y.ToJsonString()}
+    ]
+  ]
+}}";
+
+                JsonAssert.Equal(expected, actual);
+            }
+            
             // TODO: The orientation of the polyline sometime changes. Investigate why.
             [ArcObjectsTheory, ArcObjectsConventions(32188)]
-            public void NonTouchingPathsReturnsMultiLineString(GeoJsonSerializerSettings serializerSettings, IPolyline polyline, ILine line, ILine otherLine)
+            public void NonTouchingPathsReturnsMultiLineString(IPolyline polyline, ILine line, ILine otherLine)
             {
-                serializerSettings.Simplify = true;
-                var sut = new GeometryGeoJsonConverter(serializerSettings);
-
                 var path1 = (ISegmentCollection) new PathClass();
                 path1.AddSegment((ISegment)line);
 
@@ -162,7 +247,7 @@ namespace ArcObjectJsonConverters.Tests.ArcObjectsToGeoJson
                 ((IGeometryCollection) polyline).AddGeometry((IGeometry) path1);
                 ((IGeometryCollection)polyline).AddGeometry((IGeometry)path2);
 
-                var actual = JsonConvert.SerializeObject(polyline, Formatting.Indented, sut);
+                var actual = JsonConvert.SerializeObject(polyline, Formatting.Indented, _sut);
                 var expected = $@"{{
   ""type"": ""MultiLineString"",
   ""coordinates"": [

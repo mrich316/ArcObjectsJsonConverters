@@ -475,7 +475,7 @@ namespace ArcObjectConverters
 
         protected void WriteMultiPoint(JsonWriter writer, List<IPoint> points, JsonSerializer serializer)
         {
-            if (points.Count > 1)
+            if (_serializerSettings.ForceMultiGeometry || points.Count > 1)
             {
                 writer.WriteStartObject();
 
@@ -532,7 +532,7 @@ namespace ArcObjectConverters
                 }
             }
 
-            if (paths.Count > 1)
+            if (_serializerSettings.ForceMultiGeometry || paths.Count > 1)
             {
                 writer.WriteStartObject();
                 writer.WritePropertyName("type");
@@ -583,7 +583,7 @@ namespace ArcObjectConverters
                 }
             }
 
-            if (exteriorRings.Count > 1)
+            if (_serializerSettings.ForceMultiGeometry || exteriorRings.Count > 1)
             {
                 writer.WriteStartObject();
                 writer.WritePropertyName("type");

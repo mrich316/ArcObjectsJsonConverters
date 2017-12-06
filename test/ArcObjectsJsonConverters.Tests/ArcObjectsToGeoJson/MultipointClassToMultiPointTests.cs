@@ -34,5 +34,36 @@ namespace ArcObjectJsonConverters.Tests.ArcObjectsToGeoJson
 }}";
             JsonAssert.Equal(expected, actual);
         }
+
+        public class ForceMultiGeometryTrue
+        {
+            private readonly GeometryGeoJsonConverter _sut;
+
+            public ForceMultiGeometryTrue()
+            {
+                _sut = new GeometryGeoJsonConverter(new GeoJsonSerializerSettings
+                {
+                    ForceMultiGeometry = true
+                });
+            }
+
+            [ArcObjectsTheory, ArcObjectsConventions(32188)]
+            public void PointReturnsMultiPoint(IMultipoint multiPoint, IPoint point)
+            {
+                multiPoint.SetEmpty();
+                ((IPointCollection) multiPoint).AddPoint(point);
+
+                var actual = JsonConvert.SerializeObject(multiPoint, Formatting.Indented, _sut);
+                var expected = $@"{{
+  ""type"": ""MultiPoint"",
+  ""coordinates"": [[
+    {point.X.ToJsonString()},
+    {point.Y.ToJsonString()}
+  ]]
+}}";
+
+                JsonAssert.Equal(expected, actual);
+            }
+        }
     }
 }
