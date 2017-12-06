@@ -1,4 +1,5 @@
-﻿using ArcObjectConverters;
+﻿using System.Text;
+using ArcObjectConverters;
 using ESRI.ArcGIS.esriSystem;
 using ESRI.ArcGIS.Geometry;
 using Newtonsoft.Json;
@@ -31,6 +32,36 @@ namespace ArcObjectJsonConverters.Tests.ArcObjectsToGeoJson
             Assert.Equal("null", actual);
         }
 
+        [ArcObjectsTheory, ArcObjectsConventions(32188)]
+        public void PathWithSinglePointReturnsNull(GeometryGeoJsonConverter sut, IPoint point)
+        {
+            var polylineWithoutToPoint = (IPolyline)new PolylineClass();
+            polylineWithoutToPoint.FromPoint = point;
+
+            var actual = JsonConvert.SerializeObject(polylineWithoutToPoint, Formatting.Indented, sut);
+            JsonAssert.Equal("null", actual);
+        }
+
+        [ArcObjectsTheory, ArcObjectsConventions(32188)]
+        public void ManyPathWithSinglePointsReturnsMultiPoint(GeometryGeoJsonConverter sut, IPolyline polyline, IPoint[] points)
+        {
+            polyline.SetEmpty();
+
+            var collection = (IGeometryCollection)polyline;
+
+            foreach (var point in points)
+            {
+                var path = (IPointCollection)new PathClass();
+                path.AddPoint(point);
+
+                collection.AddGeometry((IGeometry)path);
+            }
+
+            var actual = JsonConvert.SerializeObject(polyline, Formatting.Indented, sut);
+            var expected = "null";
+
+            JsonAssert.Equal(expected, actual);
+        }
 
         [ArcObjectsTheory, ArcObjectsConventions(32188)]
         public void LineReturnsLineString(GeometryGeoJsonConverter sut, ILine line, ISpatialReference spatialReference)
