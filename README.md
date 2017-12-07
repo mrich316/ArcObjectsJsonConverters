@@ -1,6 +1,7 @@
-# Opinionated Json Converters for ESRI ArcObjects
+# ![Logo](doc/logo.png) Opinionated Json Converters for ESRI ArcObjects
 
 ## *This project is under development...*
+A [nuget](https://nuget.org/) will be available soon.
 
 This library aims to augment interoperability between ESRI
 ArcObjects and other projects. It provides custom `JsonConverters`
@@ -36,9 +37,9 @@ Before serializing a geometry to `json`, a converter could (depending on
 At last, if nothing can be done to serialize the geometry, the converter will
 complain by throwing an exception.
 
-## Conversion Table for ArcObjects Geometries to GeoJson
+# Conversion Table for ArcObjects Geometries to GeoJson
 
-### Definitions
+## Definitions
 
 - `invalid`: denotes a state not appropriate for the type being serialized.
    For example:
@@ -50,7 +51,9 @@ complain by throwing an exception.
   - a polygon without an exterior ring
   - an empty geometry part
 
-### Setting `ForceMulti`
+## Serializer Settings
+
+### `ForceMulti`
 
 Using `ForceMulti=false` will make the serializer ajust to input
 geometries.  If a `Multipoint`, `Polyline` or `Polygon` contains a
@@ -60,16 +63,18 @@ If `ForceMulti=true`, all ArcObjects types will always be serialized as `Multi*`
 even if they contain a single part, because ArcObjects does not make a distinction
 between single and multi-parts (excepting `Point`).
 
-### Setting `Simplify`
+### `Simplify`
 
 Using `Simplify=true` will use `ITopologicalOperator.Simplify()` before
 serializing a geometry. `Simplify` may remove duplicate geometry parts
 and may reorient segments in paths and rings.
+See the official ESRI [documentation](http://desktop.arcgis.com/en/arcobjects/latest/net/webframe.htm#itopologicaloperator_simplify.htm)
+for this setting.
 
 | ArcObjects | GeoJSON         | ForceMulti | Simplify | ForceMulti + Simplify |
 -------------|:---------------:|:----------:|:--------:|:---------------------:
 empty or invalid geometry | `null` | `null`   | `null`     | `null`
-`Point`      | `P`             | `P`          | `P`        | `P`
+`Point`                                  | `P`  | `P`  | `P` | `P`
 `Multipoint` (single point)              | `P`  | `MP` | `P` | `MP`
 `Multipoint` (a point + invalid points`*`)  | `P`  | `MP` | `P` | `MP`
 `Multipoint` (multiple different points) | `MP` | `MP` | `MP`| `MP`
@@ -100,14 +105,13 @@ Notes:
 - `*` Invalid parts are always removed.
 - `**` Polygon serialized without a hole
 
-## Status
+## Notes
 
-|Geometry    |Serialization|Deserialization|Notes|
--------------|------|------|---
-`Point`      | partial | partial |
-`Polyline`   | partial | partial | When true curves are present, the geometry is always generalized, even with `Simplify=false`. This will eventually be adjusted to only generalize the curved segments.
-`Polygon`    | todo | todo |
-`MultiPoint` | partial | todo |
+When true curves are present in `Polyline` and `Polygon`, the geometry is always
+generalized, even with `Simplify=false`. This will eventually be adjusted to only
+generalize the curved segments.
 
-A [nuget](https://nuget.org/) could be made when a geometry will support
-serialization and deserialization.
+## Licensing
+
+This project is open source under the
+[MIT license](https://github.com/mrich316/ArcObjectsJsonConverters/blob/master/LICENSE).
